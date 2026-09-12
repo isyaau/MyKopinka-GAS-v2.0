@@ -21,7 +21,7 @@ function getAppVersion() { return APP_VERSION; }
 
 function doGet(e) {
   return HtmlService.createTemplateFromFile('index').evaluate()
-      .setTitle('Portal Kopinka v' + APP_VERSION)
+      .setTitle('MyKopinka v' + APP_VERSION)
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }

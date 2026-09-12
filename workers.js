@@ -12,7 +12,7 @@ export default {
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <link rel="icon" type="image/x-icon" href="https://i.ibb.co.com/ycqKLkNL/favicon-32x32.png">
           <script src="https://unpkg.com/html5-qrcode"></script>
-          <title>Portal Kopinka</title>
+          <title>MyKopinka</title>
           <style>
             body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #ffffff; }
             iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
