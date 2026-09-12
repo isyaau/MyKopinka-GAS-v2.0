@@ -5559,8 +5559,7 @@
             h += '<span style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.5px;" id="' + uid + '-curlabel">Bulan Berjalan</span>';
             h += '<span style="font-size:15px; font-weight:900;" id="' + uid + '-cur">Rp -</span>';
             h += '</div>';
-            h += '<div id="' + uid + '-months" style="display:flex; flex-direction:column; gap:4px; max-height:230px; overflow-y:auto; padding-right:2px;"></div>';
-            h += '<div style="display:flex; justify-content:space-between; border-top:2px solid #f1f2f6; margin-top:6px; padding:10px 4px 0;">';
+            h += '<div style="display:flex; justify-content:space-between; margin-top:6px; padding:10px 4px 0;">';
             h += '<span style="font-size:10px; font-weight:bold; color:#64748b;">TOTAL PEMAKAIAN</span>';
             h += '<span style="font-size:13px; font-weight:800; color:#9a3412;">Rp ' + (Number(outstanding) || 0).toLocaleString('id-ID') + '</span>';
             h += '</div>';
@@ -5578,21 +5577,8 @@
                 res.months.forEach(function (mm) { if (Number(mm.m) === cur) curTotal = Number(mm.total) || 0; });
                 var curLabelEl = document.getElementById(uid + '-curlabel');
                 var curEl = document.getElementById(uid + '-cur');
-                var monthsEl = document.getElementById(uid + '-months');
                 if (curLabelEl) curLabelEl.textContent = (_BULAN_NAMES_FULL[cur - 1] || 'Bulan') + ' ' + tahun;
                 if (curEl) curEl.textContent = 'Rp ' + curTotal.toLocaleString('id-ID');
-                if (monthsEl) {
-                    var rows = '';
-                    res.months.forEach(function (mm) {
-                        var isCur = Number(mm.m) === cur;
-                        var amt = Number(mm.total) || 0;
-                        rows += '<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 9px; border-radius:8px;' + (isCur ? 'background:#fff7ed;' : 'background:#f8fafc;') + '">';
-                        rows += '<span style="font-size:11px;' + (isCur ? 'color:#c2410c; font-weight:800;' : 'color:#475569;') + '">' + (_BULAN_NAMES_FULL[Number(mm.m) - 1] || mm.m) + ' ' + tahun + '</span>';
-                        rows += '<span style="font-size:12px; font-weight:700;' + (isCur ? 'color:#9a3412;' : 'color:#334155;') + '">Rp ' + amt.toLocaleString('id-ID') + '</span>';
-                        rows += '</div>';
-                    });
-                    monthsEl.innerHTML = rows;
-                }
             }).withFailureHandler(function () { }).getPemakaianBulananMember(noAnggota);
         }
 
