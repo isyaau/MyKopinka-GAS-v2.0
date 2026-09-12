@@ -3255,8 +3255,8 @@
                     <thead>
                         <tr>
                             <th>Foto</th>
-                            <th>Username / No</th>
-                            <th>Nama Lengkap</th>
+                            <th>No Anggota / Username</th>
+                            <th>Nama Anggota / Nama Toko</th>
                             <th>Role / Nama Kelompok</th>
                             <th>Status</th>
                             <th>Blokir Piutang</th>
@@ -4250,7 +4250,7 @@
                 </div>
 
                 <div class="form-group" style="margin-bottom:5px;">
-                    <label>Username / No. Anggota*:</label>
+                    <label>Username (Login)*:</label>
                     <input type="text" id="u-username" style="border-color:#8e44ad;">
                 </div>
                 <div class="form-group" style="margin-bottom:5px;">
@@ -4258,7 +4258,7 @@
                     <input type="text" id="u-pass" style="border-color:#8e44ad;">
                 </div>
                 <div class="form-group" style="margin-bottom:5px; grid-column: 1 / -1;">
-                    <label>Nama Lengkap:</label>
+                    <label>Nama Anggota / Nama Toko:</label>
                     <input type="text" id="u-nama">
                 </div>
 
@@ -4290,7 +4290,7 @@
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:5px; grid-column: 1 / -1;">
-                    <label>Nama Kelompok:</label>
+                    <label>Kode Toko / Kelompok:</label>
                     <input type="text" id="u-kelompok">
                 </div>
 
@@ -4312,9 +4312,17 @@
                     <input type="text" id="u-ktp" maxlength="16" placeholder="Opsional"
                         oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
+                <div class="form-group" style="margin-bottom:5px; grid-column: 1 / -1;">
+                    <label>No. Anggota:</label>
+                    <input type="text" id="u-no-anggota" placeholder="Nomor anggota resmi (contoh: AMB-001)">
+                </div>
                 <div class="form-group" style="margin-bottom:5px;">
-                    <label>NPWP:</label>
-                    <input type="text" id="u-npwp" placeholder="Masukkan NPWP">
+                    <label>Tempat Lahir:</label>
+                    <input type="text" id="u-tempat-lahir" placeholder="Jakarta">
+                </div>
+                <div class="form-group" style="margin-bottom:5px;">
+                    <label>Tanggal Lahir:</label>
+                    <input type="date" id="u-tgl-lahir">
                 </div>
                 <div class="form-group" style="margin-bottom:5px;">
                     <label>Jenis Kelamin:</label>
@@ -4325,12 +4333,33 @@
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:5px;">
-                    <label>Tempat Lahir:</label>
-                    <input type="text" id="u-tempat-lahir" placeholder="Jakarta">
+                    <label>Kota / Kabupaten:</label>
+                    <input type="text" id="u-kota" placeholder="Kota tempat tinggal">
+                </div>
+                <div class="form-group" style="margin-bottom:5px; grid-column: 1 / -1;">
+                    <label>NPWP:</label>
+                    <input type="text" id="u-npwp" placeholder="Masukkan NPWP">
                 </div>
                 <div class="form-group" style="margin-bottom:5px;">
-                    <label>Tanggal Lahir:</label>
-                    <input type="date" id="u-tgl-lahir">
+                    <label>Status Pegawai:</label>
+                    <select id="u-status-pegawai">
+                        <option value="-">-</option>
+                        <option value="Karyawan">Karyawan</option>
+                        <option value="Pensiunan">Pensiunan</option>
+                        <option value="Non Karyawan">Non Karyawan</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:5px;">
+                    <label>Tanggal MPP:</label>
+                    <input type="date" id="u-tgl-mpp">
+                </div>
+                <div class="form-group" style="margin-bottom:5px;">
+                    <label>Tanggal Pensiun:</label>
+                    <input type="date" id="u-tgl-pensiun">
+                </div>
+                <div class="form-group" style="margin-bottom:5px;">
+                    <label>Tanggal Keluar Keanggotaan:</label>
+                    <input type="date" id="u-tgl-keluar">
                 </div>
 
                 <div class="form-group" style="margin-bottom:5px; grid-column: 1 / -1;">
@@ -4340,10 +4369,6 @@
                 <div class="form-group" style="margin-bottom:5px; grid-column: 1 / -1;">
                     <label>Alamat Domisili:</label>
                     <textarea id="u-alamat-domisili" rows="2"></textarea>
-                </div>
-                <div class="form-group" style="margin-bottom:5px; grid-column: 1 / -1;">
-                    <label>Kota / Kabupaten:</label>
-                    <input type="text" id="u-kota" placeholder="Kota tempat tinggal">
                 </div>
 
                 <div class="form-group" style="margin-bottom:5px;">
@@ -5608,7 +5633,7 @@
                         '<div class="id-card-info">' +
                         '<h3>' + res.info.nama + '</h3>' +
                         '<p>NO ANGGOTA</p>' +
-                        '<div class="card-no-badge">' + res.info.username + '</div>' +
+                        '<div class="card-no-badge">' + (res.info.noAnggota || res.info.username) + '</div>' +
                         '<p style="margin-top:5px;">KELOMPOK</p>' +
                         '<b class="kelompok-text">' + res.info.kelompok + '</b>' +
                         '</div>' +
@@ -5720,7 +5745,7 @@
                             '<div class="id-card-info">' +
                             '<h3>' + res.info.nama + '</h3>' +
                             '<p>NO ANGGOTA</p>' +
-                            '<div class="card-no-badge">' + res.info.username + '</div>' +
+                            '<div class="card-no-badge">' + (res.info.noAnggota || res.info.username) + '</div>' +
                             '<p style="margin-top:5px;">KELOMPOK</p>' +
                             '<b class="kelompok-text">' + res.info.kelompok + '</b>' +
                             '</div>' +
@@ -6897,10 +6922,10 @@
         function editWaToko(username, namaToko, currentWa) { Swal.fire({ title: 'Atur Nomor WA Toko', html: 'Masukkan nomor WA untuk toko <b>' + namaToko + '</b>.<br><small>(Mulai dengan 08... atau 628...)</small>', input: 'text', inputValue: currentWa === '-' ? '' : currentWa, showCancelButton: true, confirmButtonColor: '#27ae60', confirmButtonText: 'Simpan', preConfirm: function (val) { if (!val) Swal.showValidationMessage('Nomor WA tidak boleh kosong!'); return val; } }).then(function (result) { if (result.isConfirmed) { showLoading('Menyimpan...'); google.script.run.withSuccessHandler(function (res) { hideLoading(); if (res.status === 'sukses') { Swal.fire('Berhasil', res.msg, 'success'); loadAdminToko(); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).updateWaToko(username, result.value); } }); }
 
         function loadKelolaAkunAdmin() { showLoading("Memuat User..."); google.script.run.withSuccessHandler(function (res) { hideLoading(); allUsersData = res; var totalAnggota = 0; var totalAktif = 0; var totalPasif = 0; var totalNonaktif = 0; res.forEach(function (u) { if (u.role === 'Anggota') { totalAnggota++; var st = String(u.status).trim().toLowerCase(); if (st === 'aktif') totalAktif++; else if (st === 'pasif') totalPasif++; else if (st === 'nonaktif') totalNonaktif++; } }); safeSetText('stat-user-total', totalAnggota); safeSetText('stat-user-aktif', totalAktif); safeSetText('stat-user-pasif', totalPasif); safeSetText('stat-user-nonaktif', totalNonaktif); applyFilterUsers(); }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).getAllUsersFull(); }
-        function applyFilterUsers() { var q = document.getElementById('search-user').value.toLowerCase(); filteredUsersData = allUsersData.filter(function (u) { return u.username.toLowerCase().includes(q) || u.nama.toLowerCase().includes(q); }); userPage = 1; renderUserTable(); }
+        function applyFilterUsers() { var q = document.getElementById('search-user').value.toLowerCase(); filteredUsersData = allUsersData.filter(function (u) { return u.username.toLowerCase().includes(q) || u.nama.toLowerCase().includes(q) || String(u.noAnggota || '').toLowerCase().includes(q); }); userPage = 1; renderUserTable(); }
         function loadKasirKelolaAkun() { showLoading("Memuat Anggota..."); google.script.run.withSuccessHandler(function (res) { hideLoading(); kasirAnggotaData = res; applyFilterKasirAnggota(); }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).getAnggotaListKasir(); }
-        function applyFilterKasirAnggota() { var q = document.getElementById('search-kasir-anggota').value.toLowerCase(); var st = document.getElementById('filter-kasir-status').value; kasirAnggotaFiltered = kasirAnggotaData.filter(function (u) { var s = String(u.status).trim().toLowerCase(); var matchSt = (st === 'ALL') || (s === st.toLowerCase()); return (u.nama.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || (u.kelompok || '').toLowerCase().includes(q)) && matchSt; }); kasirAnggotaPage = 1; renderKasirAnggotaTable(); }
-        function renderKasirAnggotaTable() { var tb = document.querySelector('#tabel-kasir-anggota tbody'); tb.innerHTML = ''; var tot = Math.ceil(kasirAnggotaFiltered.length / kasirAnggotaLimit) || 1; if (kasirAnggotaPage > tot) kasirAnggotaPage = tot; if (kasirAnggotaPage < 1) kasirAnggotaPage = 1; var start = (kasirAnggotaPage - 1) * kasirAnggotaLimit; var pagData = kasirAnggotaFiltered.slice(start, start + kasirAnggotaLimit); if (pagData.length === 0) { return tb.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">Kosong.</td></tr>'; } pagData.forEach(function (u) { var st = String(u.status).trim().toLowerCase(); var statusBadge = '<span class="badge-status" style="background:#e74c3c;">NONAKTIF</span>'; if (st === 'aktif') statusBadge = '<span class="badge-status" style="background:#27ae60;">AKTIF</span>'; else if (st === 'pasif') statusBadge = '<span class="badge-status" style="background:#7f8c8d;">PASIF</span>'; var namaDisplay = (u.jabatan === 'Pimpinan Kelompok') ? '<i class="bi bi-star-fill" style="color:#f1c40f;"></i> ' + u.nama : u.nama; var finalAvatar = getAvatarUrl(u.foto, u.nama); tb.innerHTML += '<tr><td><img src="' + finalAvatar + '" style="width:35px;height:35px;border-radius:50%;object-fit:cover;" alt="Foto"></td><td><b>' + namaDisplay + '</b></td><td>' + u.username + '</td><td>' + u.kelompok + '</td><td>' + u.jabatan + '</td><td>' + u.hp + '</td><td>' + statusBadge + '</td><td style="text-align:center;"><button class="btn-page" style="background:#8e44ad; border-color:#8e44ad; color:#fff; white-space:nowrap;" onclick="lihatDetailKasirUser(' + (start + pagData.indexOf(u)) + ')"><i class="bi bi-eye-fill"></i> Detail</button></td></tr>'; }); safeSetText('kasir-anggota-page-info', 'Hal ' + kasirAnggotaPage + ' / ' + tot); document.getElementById('kasir-anggota-prev').disabled = (kasirAnggotaPage === 1); document.getElementById('kasir-anggota-next').disabled = (kasirAnggotaPage === tot); }
+        function applyFilterKasirAnggota() { var q = document.getElementById('search-kasir-anggota').value.toLowerCase(); var st = document.getElementById('filter-kasir-status').value; kasirAnggotaFiltered = kasirAnggotaData.filter(function (u) { var s = String(u.status).trim().toLowerCase(); var matchSt = (st === 'ALL') || (s === st.toLowerCase()); return (u.nama.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || String(u.noAnggota || '').toLowerCase().includes(q) || (u.kelompok || '').toLowerCase().includes(q)) && matchSt; }); kasirAnggotaPage = 1; renderKasirAnggotaTable(); }
+        function renderKasirAnggotaTable() { var tb = document.querySelector('#tabel-kasir-anggota tbody'); tb.innerHTML = ''; var tot = Math.ceil(kasirAnggotaFiltered.length / kasirAnggotaLimit) || 1; if (kasirAnggotaPage > tot) kasirAnggotaPage = tot; if (kasirAnggotaPage < 1) kasirAnggotaPage = 1; var start = (kasirAnggotaPage - 1) * kasirAnggotaLimit; var pagData = kasirAnggotaFiltered.slice(start, start + kasirAnggotaLimit); if (pagData.length === 0) { return tb.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">Kosong.</td></tr>'; } pagData.forEach(function (u) { var st = String(u.status).trim().toLowerCase(); var statusBadge = '<span class="badge-status" style="background:#e74c3c;">NONAKTIF</span>'; if (st === 'aktif') statusBadge = '<span class="badge-status" style="background:#27ae60;">AKTIF</span>'; else if (st === 'pasif') statusBadge = '<span class="badge-status" style="background:#7f8c8d;">PASIF</span>'; var namaDisplay = (u.jabatan === 'Pimpinan Kelompok') ? '<i class="bi bi-star-fill" style="color:#f1c40f;"></i> ' + u.nama : u.nama; var finalAvatar = getAvatarUrl(u.foto, u.nama); tb.innerHTML += '<tr><td><img src="' + finalAvatar + '" style="width:35px;height:35px;border-radius:50%;object-fit:cover;" alt="Foto"></td><td><b>' + namaDisplay + '</b></td><td>' + (u.noAnggota || u.username) + '</td><td>' + u.kelompok + '</td><td>' + u.jabatan + '</td><td>' + u.hp + '</td><td>' + statusBadge + '</td><td style="text-align:center;"><button class="btn-page" style="background:#8e44ad; border-color:#8e44ad; color:#fff; white-space:nowrap;" onclick="lihatDetailKasirUser(' + (start + pagData.indexOf(u)) + ')"><i class="bi bi-eye-fill"></i> Detail</button></td></tr>'; }); safeSetText('kasir-anggota-page-info', 'Hal ' + kasirAnggotaPage + ' / ' + tot); document.getElementById('kasir-anggota-prev').disabled = (kasirAnggotaPage === 1); document.getElementById('kasir-anggota-next').disabled = (kasirAnggotaPage === tot); }
 
         function lihatDetailKasirUser(i) {
             var u = kasirAnggotaFiltered[i];
@@ -6929,7 +6954,7 @@
                 '<div style="position:absolute; bottom:-18px; right:34px; width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.05);"></div>' +
                 '<img src="' + getAvatarUrl(u.foto, u.nama) + '" style="width:76px; height:76px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.85); box-shadow:0 4px 14px rgba(0,0,0,0.35);">' +
                 '<div style="font-size:17px; font-weight:800; margin-top:10px;">' + pv(u.nama) + '</div>' +
-                '<div style="font-size:12px; color:#cfd8e3; margin-top:2px;">No. Anggota: <b style="color:#fff;">' + pv(u.username) + '</b></div>' +
+                '<div style="font-size:12px; color:#cfd8e3; margin-top:2px;">No. Anggota: <b style="color:#fff;">' + pv(u.noAnggota || u.username) + '</b></div>' +
                 '<div style="font-size:12px; color:#cfd8e3;">Role: Anggota</div>' +
                 '<div style="margin-top:12px; display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">' + stChip + blokChip + '</div>' +
                 '</div>' +
@@ -6939,8 +6964,13 @@
                 '</div>' +
                 '<div style="font-size:12px;">' +
                 sec('Organisasi', 'bi-diagram-3-fill', grid([
+                    gridItem('No. Anggota', pv(u.noAnggota)),
                     gridItem('NIP', pv(u.nip)),
-                    gridItem('Tanggal Masuk', pv(u.tglMasuk))
+                    gridItem('Tanggal Masuk', pv(u.tglMasuk)),
+                    gridItem('Status Pegawai', pv(u.statusPegawai)),
+                    gridItem('Tanggal MPP', pv(u.tglMpp)),
+                    gridItem('Tanggal Pensiun', pv(u.tglPensiun)),
+                    gridItem('Tanggal Keluar Keanggotaan', pv(u.tglKeluar))
                 ])) +
                 sec('Data Pribadi', 'bi-person-badge-fill', grid([
                     gridItem('No. KTP', pv(u.ktp)),
@@ -6970,8 +7000,8 @@
 
         function changePageKasirAnggota(dir) { kasirAnggotaPage += dir; renderKasirAnggotaTable(); }
         function bukaWaUser(noWa) { var u = (allUsersData || []).find(function (x) { return String(x.hp || '').replace(/\D/g, '') === noWa; }); var nama = (u && u.nama) ? u.nama : ''; window.open('https://wa.me/' + noWa + '?text=' + encodeURIComponent('Halo ' + nama + ', dari Admin MyKopinka'), '_blank'); }
-        function exportUsersExcel() { if (allUsersData.length === 0) return Swal.fire('Info', 'Data users kosong.', 'info'); var d = [["No Anggota", "Nama Lengkap", "Role", "Nama Kelompok", "NIP", "Tgl Masuk", "No KTP", "Email", "No HP", "No Rekening", "Bank", "Atas Nama", "Status", "Jabatan", "Alamat KTP", "Alamat Domisili", "NPWP", "JK", "Tempat Lahir", "Tgl Lahir", "Kota", "Blokir Piutang"]]; var src = filteredUsersData.length ? filteredUsersData : allUsersData; src.forEach(function (u) { d.push([u.username, u.nama, u.role, u.kelompok, u.nip, u.tglMasuk, u.ktp, u.email, u.hp, u.rek, u.namaBank, u.atasNama, u.status, u.jabatan, u.alamatKtp, u.alamatDomisili, u.npwp, u.jk, u.tempatLahir, u.tglLahir, u.kota, String(u.blokirPiutang || '')]); }); var ws = XLSX.utils.aoa_to_sheet(d); var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data_Users"); XLSX.writeFile(wb, "Export_Users.xlsx"); }
-        function renderUserTable() { var tb = document.querySelector('#tabel-users tbody'); tb.innerHTML = ''; var tot = Math.ceil(filteredUsersData.length / userLimit) || 1; if (userPage > tot) userPage = tot; if (userPage < 1) userPage = 1; var start = (userPage - 1) * userLimit; var pagData = filteredUsersData.slice(start, start + userLimit); if (pagData.length === 0) { return tb.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">Kosong.</td></tr>'; } pagData.forEach(function (u) { var i = allUsersData.findIndex(function (x) { return x.username === u.username; }); var statusBadge = '-'; if (u.role === 'Anggota') { if (u.status === 'Aktif') statusBadge = '<span class="badge-status" style="background:#27ae60;">AKTIF</span>'; else if (u.status === 'Pasif') statusBadge = '<span class="badge-status" style="background:#7f8c8d;">PASIF</span>'; else if (String(u.status).toLowerCase() === 'nonaktif') statusBadge = '<span class="badge-status" style="background:#e74c3c;">NONAKTIF</span>'; } var namaDisplay = (u.jabatan === 'Pimpinan Kelompok') ? '<i class="bi bi-star-fill" style="color:#f1c40f;"></i> ' + u.nama : u.nama; var finalAvatar = getAvatarUrl(u.foto, u.nama); var isBlokir = (u.blokirPiutang === 'blokir' || u.blokirPiutang === 'y' || u.blokirPiutang === 'yes' || u.blokirPiutang === '1'); var blokirBadge = isBlokir ? '<span style="color:#e74c3c; font-weight:bold; font-size:12px;"><i class="bi bi-lock-fill"></i> Diblokir</span>' : '<span style="color:#27ae60; font-weight:bold; font-size:12px;"><i class="bi bi-unlock-fill"></i> OK</span>'; var hpWA = String(u.hp || '').replace(/\D/g, ''); var aksiDd = '<div class="dd-wrap"><button type="button" class="dd-btn" onclick="toggleUserDd(this)"><i class="bi bi-three-dots-vertical"></i> Aksi</button><div class="dd-menu">'; aksiDd += '<button type="button" class="dd-item" onclick="lihatDetailUser(' + i + '); tutupUserDd()"><i class="bi bi-eye-fill"></i> Detail</button>'; if (hpWA.length >= 10) { aksiDd += '<button type="button" class="dd-item" onclick="bukaWaUser(\'' + hpWA + '\'); tutupUserDd()"><i class="bi bi-whatsapp"></i> Chat WA</button>'; } aksiDd += '<button type="button" class="dd-item" onclick="promptPreviewSlip(\'' + u.username + '\'); tutupUserDd()"><i class="bi bi-file-earmark-text"></i> Slip</button>'; aksiDd += '<button type="button" class="dd-item" onclick="bukaModalUser(\'edit\', ' + i + '); tutupUserDd()"><i class="bi bi-pencil-square"></i> Edit</button>'; aksiDd += '<div class="dd-sep"></div>'; aksiDd += '<button type="button" class="dd-item" onclick="toggleBlokirPiutang(\'' + u.username + '\'); tutupUserDd()">' + (isBlokir ? '<i class="bi bi-unlock-fill"></i> Buka Blokir' : '<i class="bi bi-lock-fill"></i> Blokir Piutang') + '</button>'; aksiDd += '<button type="button" class="dd-item dd-danger" onclick="hapusUserAdmin(\'' + u.username + '\'); tutupUserDd()"><i class="bi bi-trash-fill"></i> Hapus</button>'; aksiDd += '</div></div>'; tb.innerHTML += '<tr><td><img src="' + finalAvatar + '" style="width:35px;height:35px;border-radius:50%;object-fit:cover;"></td><td><b>' + u.username + '</b></td><td>' + namaDisplay + '</td><td><span class="badge-role" style="color:#555; background:#eee; margin:0;">' + u.role + '</span><br><span style="font-size:10px; color:#7f8c8d;">' + u.kelompok + '</span></td><td>' + statusBadge + '</td><td style="text-align:center;">' + blokirBadge + '</td><td style="white-space:nowrap;">' + aksiDd + '</td></tr>'; }); safeSetText('user-page-info', 'Hal ' + userPage + ' / ' + tot); document.getElementById('user-prev').disabled = (userPage === 1); document.getElementById('user-next').disabled = (userPage === tot); }
+        function exportUsersExcel() { if (allUsersData.length === 0) return Swal.fire('Info', 'Data users kosong.', 'info'); var d = [["No Anggota", "Nama Lengkap", "Role", "Kode Toko / Kelompok", "NIP", "Tgl Masuk", "No KTP", "Email", "No HP", "No Rekening", "Bank", "Atas Nama", "Status", "Jabatan", "Alamat KTP", "Alamat Domisili", "Tempat Lahir", "Tgl Lahir", "JK", "Kota", "NPWP", "Status Pegawai", "Tgl MPP", "Tgl Pensiun", "Tgl Keluar Keanggotaan", "Blokir Piutang", "Username"]]; var src = filteredUsersData.length ? filteredUsersData : allUsersData; src.forEach(function (u) { d.push([u.noAnggota || u.username, u.nama, u.role, u.kelompok, u.nip, u.tglMasuk, u.ktp, u.email, u.hp, u.rek, u.namaBank, u.atasNama, u.status, u.jabatan, u.alamatKtp, u.alamatDomisili, u.tempatLahir, u.tglLahir, u.jk, u.kota, u.npwp, u.statusPegawai, u.tglMpp, u.tglPensiun, u.tglKeluar, String(u.blokirPiutang || ''), u.username]); }); var ws = XLSX.utils.aoa_to_sheet(d); var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data_Users"); XLSX.writeFile(wb, "Export_Users.xlsx"); }
+        function renderUserTable() { var tb = document.querySelector('#tabel-users tbody'); tb.innerHTML = ''; var tot = Math.ceil(filteredUsersData.length / userLimit) || 1; if (userPage > tot) userPage = tot; if (userPage < 1) userPage = 1; var start = (userPage - 1) * userLimit; var pagData = filteredUsersData.slice(start, start + userLimit); if (pagData.length === 0) { return tb.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">Kosong.</td></tr>'; } pagData.forEach(function (u) { var i = allUsersData.findIndex(function (x) { return x.username === u.username; }); var statusBadge = '-'; if (u.role === 'Anggota') { if (u.status === 'Aktif') statusBadge = '<span class="badge-status" style="background:#27ae60;">AKTIF</span>'; else if (u.status === 'Pasif') statusBadge = '<span class="badge-status" style="background:#7f8c8d;">PASIF</span>'; else if (String(u.status).toLowerCase() === 'nonaktif') statusBadge = '<span class="badge-status" style="background:#e74c3c;">NONAKTIF</span>'; } var namaDisplay = (u.jabatan === 'Pimpinan Kelompok') ? '<i class="bi bi-star-fill" style="color:#f1c40f;"></i> ' + u.nama : u.nama; var finalAvatar = getAvatarUrl(u.foto, u.nama); var isBlokir = (u.blokirPiutang === 'blokir' || u.blokirPiutang === 'y' || u.blokirPiutang === 'yes' || u.blokirPiutang === '1'); var blokirBadge = isBlokir ? '<span style="color:#e74c3c; font-weight:bold; font-size:12px;"><i class="bi bi-lock-fill"></i> Diblokir</span>' : '<span style="color:#27ae60; font-weight:bold; font-size:12px;"><i class="bi bi-unlock-fill"></i> OK</span>'; var hpWA = String(u.hp || '').replace(/\D/g, ''); var aksiDd = '<div class="dd-wrap"><button type="button" class="dd-btn" onclick="toggleUserDd(this)"><i class="bi bi-three-dots-vertical"></i> Aksi</button><div class="dd-menu">'; aksiDd += '<button type="button" class="dd-item" onclick="lihatDetailUser(' + i + '); tutupUserDd()"><i class="bi bi-eye-fill"></i> Detail</button>'; if (hpWA.length >= 10) { aksiDd += '<button type="button" class="dd-item" onclick="bukaWaUser(\'' + hpWA + '\'); tutupUserDd()"><i class="bi bi-whatsapp"></i> Chat WA</button>'; } aksiDd += '<button type="button" class="dd-item" onclick="promptPreviewSlip(\'' + u.username + '\'); tutupUserDd()"><i class="bi bi-file-earmark-text"></i> Slip</button>'; aksiDd += '<button type="button" class="dd-item" onclick="bukaModalUser(\'edit\', ' + i + '); tutupUserDd()"><i class="bi bi-pencil-square"></i> Edit</button>'; aksiDd += '<div class="dd-sep"></div>'; aksiDd += '<button type="button" class="dd-item" onclick="toggleBlokirPiutang(\'' + u.username + '\'); tutupUserDd()">' + (isBlokir ? '<i class="bi bi-unlock-fill"></i> Buka Blokir' : '<i class="bi bi-lock-fill"></i> Blokir Piutang') + '</button>'; aksiDd += '<button type="button" class="dd-item dd-danger" onclick="hapusUserAdmin(\'' + u.username + '\'); tutupUserDd()"><i class="bi bi-trash-fill"></i> Hapus</button>'; aksiDd += '</div></div>'; tb.innerHTML += '<tr><td><img src="' + finalAvatar + '" style="width:35px;height:35px;border-radius:50%;object-fit:cover;"></td><td><b>' + (u.noAnggota || u.username) + '</b><br><span style="font-size:10px; color:#7f8c8d;">' + u.username + '</span></td><td>' + namaDisplay + '</td><td><span class="badge-role" style="color:#555; background:#eee; margin:0;">' + u.role + '</span><br><span style="font-size:10px; color:#7f8c8d;">' + u.kelompok + '</span></td><td>' + statusBadge + '</td><td style="text-align:center;">' + blokirBadge + '</td><td style="white-space:nowrap;">' + aksiDd + '</td></tr>'; }); safeSetText('user-page-info', 'Hal ' + userPage + ' / ' + tot); document.getElementById('user-prev').disabled = (userPage === 1); document.getElementById('user-next').disabled = (userPage === tot); }
         function changePageUsers(dir) { userPage += dir; renderUserTable(); }
 
         function toggleUserDd(btn) {
@@ -7027,7 +7057,7 @@
                 '<div style="position:absolute; bottom:-18px; right:34px; width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.05);"></div>' +
                 '<img src="' + getAvatarUrl(u.foto, u.nama) + '" style="width:76px; height:76px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.85); box-shadow:0 4px 14px rgba(0,0,0,0.35);">' +
                 '<div style="font-size:17px; font-weight:800; margin-top:10px;">' + pv(u.nama) + '</div>' +
-                '<div style="font-size:12px; color:#cfd8e3; margin-top:2px;">No. Anggota: <b style="color:#fff;">' + pv(u.username) + '</b></div>' +
+                '<div style="font-size:12px; color:#cfd8e3; margin-top:2px;">No. Anggota: <b style="color:#fff;">' + pv(u.noAnggota || u.username) + '</b></div>' +
                 '<div style="font-size:12px; color:#cfd8e3;">Role: ' + (u.role || '-') + '</div>' +
                 '<div style="margin-top:12px; display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">' + stChip + blokChip + '</div>' +
                 '</div>' +
@@ -7037,8 +7067,13 @@
                 '</div>' +
                 '<div style="font-size:12px;">' +
                 sec('Organisasi', 'bi-diagram-3-fill', grid([
+                    gridItem('No. Anggota', pv(u.noAnggota)),
                     gridItem('NIP', pv(u.nip)),
-                    gridItem('Tanggal Masuk', pv(u.tglMasuk))
+                    gridItem('Tanggal Masuk', pv(u.tglMasuk)),
+                    gridItem('Status Pegawai', pv(u.statusPegawai)),
+                    gridItem('Tanggal MPP', pv(u.tglMpp)),
+                    gridItem('Tanggal Pensiun', pv(u.tglPensiun)),
+                    gridItem('Tanggal Keluar Keanggotaan', pv(u.tglKeluar))
                 ])) +
                 sec('Data Pribadi', 'bi-person-badge-fill', grid([
                     gridItem('No. KTP', pv(u.ktp)),
@@ -7120,6 +7155,8 @@
                 safeSetValue('u-status', 'Aktif'); safeSetValue('u-jabatan', 'Anggota Kelompok');
                 safeSetValue('u-tgl', ""); safeSetValue('u-npwp', ""); safeSetValue('u-jk', "-");
                 safeSetValue('u-tempat-lahir', ""); safeSetValue('u-tgl-lahir', ""); safeSetValue('u-kota', "");
+                safeSetValue('u-no-anggota', ""); safeSetValue('u-status-pegawai', "-");
+                safeSetValue('u-tgl-mpp', ""); safeSetValue('u-tgl-pensiun', ""); safeSetValue('u-tgl-keluar', "");
                 p.style.display = "none"; p.src = "";
             } else {
                 var u = allUsersData[idx];
@@ -7133,6 +7170,12 @@
                 safeSetValue('u-alamat-ktp', u.alamatKtp === '-' ? '' : u.alamatKtp);
                 safeSetValue('u-alamat-domisili', u.alamatDomisili === '-' ? '' : u.alamatDomisili);
                 safeSetValue('u-npwp', u.npwp === '-' ? '' : u.npwp); safeSetValue('u-jk', u.jk || "-");
+                safeSetValue('u-no-anggota', u.noAnggota && u.noAnggota !== '-' ? u.noAnggota : '');
+                safeSetValue('u-status-pegawai', u.statusPegawai && u.statusPegawai !== '-' ? u.statusPegawai : "-");
+                var _toIso = function (v) { if (v && v.includes('/')) { var p = v.split('/'); if (p.length === 3) v = p[2] + '-' + p[1].padStart(2, '0') + '-' + p[0].padStart(2, '0'); } return v; };
+                safeSetValue('u-tgl-mpp', _toIso(u.tglMpp));
+                safeSetValue('u-tgl-pensiun', _toIso(u.tglPensiun));
+                safeSetValue('u-tgl-keluar', _toIso(u.tglKeluar));
                 safeSetValue('u-tempat-lahir', u.tempatLahir === '-' ? '' : u.tempatLahir);
                 safeSetValue('u-kota', u.kota === '-' ? '' : u.kota);
                 var tglLRaw = u.tglLahir; if (tglLRaw && tglLRaw.includes('/')) { var pts = tglLRaw.split('/'); if (pts.length === 3) tglLRaw = pts[2] + '-' + pts[1].padStart(2, '0') + '-' + pts[0].padStart(2, '0'); } safeSetValue('u-tgl-lahir', tglLRaw);
@@ -7164,7 +7207,12 @@
                 jk: document.getElementById('u-jk').value,
                 tempatLahir: document.getElementById('u-tempat-lahir').value.trim(),
                 tglLahir: document.getElementById('u-tgl-lahir').value,
-                kota: document.getElementById('u-kota').value.trim()
+                kota: document.getElementById('u-kota').value.trim(),
+                noAnggota: document.getElementById('u-no-anggota').value.trim(),
+                statusPegawai: document.getElementById('u-status-pegawai').value,
+                tglMpp: document.getElementById('u-tgl-mpp').value,
+                tglPensiun: document.getElementById('u-tgl-pensiun').value,
+                tglKeluar: document.getElementById('u-tgl-keluar').value
             };
             var fi = document.getElementById('u-foto-file') ? document.getElementById('u-foto-file').files[0] : null;
             if (!obj.username) return Swal.fire('Peringatan', 'Username Wajib Diisi!', 'warning');
@@ -7277,7 +7325,7 @@
 
         async function loadKartuAnggota() {
             var finalAvatar = getAvatarUrl(userToko.foto, userToko.nama); document.getElementById('card-foto').src = finalAvatar;
-            safeSetText('card-nama', userToko.nama); safeSetText('card-no', userToko.user); safeSetText('disp-nip', userToko.nip); safeSetText('disp-ktp', userToko.ktp); safeSetText('disp-email', userToko.email); safeSetText('disp-hp', userToko.noHp); safeSetText('disp-namabank', userToko.namaBank); safeSetText('disp-rek', userToko.rekBank); safeSetText('disp-atasnama', userToko.atasNama); safeSetText('disp-kelompok', userToko.kelompok); safeSetText('disp-alamat-ktp', userToko.alamatKtp); safeSetText('disp-alamat-domisili', userToko.alamatDomisili);
+            safeSetText('card-nama', userToko.nama); safeSetText('card-no', userToko.noAnggota || userToko.user); safeSetText('disp-nip', userToko.nip); safeSetText('disp-ktp', userToko.ktp); safeSetText('disp-email', userToko.email); safeSetText('disp-hp', userToko.noHp); safeSetText('disp-namabank', userToko.namaBank); safeSetText('disp-rek', userToko.rekBank); safeSetText('disp-atasnama', userToko.atasNama); safeSetText('disp-kelompok', userToko.kelompok); safeSetText('disp-alamat-ktp', userToko.alamatKtp); safeSetText('disp-alamat-domisili', userToko.alamatDomisili);
             safeSetText('disp-kelompok-badge', userToko.kelompok);
             var statusAnggotaHtml = userToko.statusAnggota === 'Aktif' ? 'AKTIF' : 'PASIF'; document.getElementById('disp-status').innerText = statusAnggotaHtml; document.getElementById('disp-status').style.color = userToko.statusAnggota === 'Aktif' ? '#27ae60' : '#7f8c8d';
             var tglM = userToko.tglMasuk; var lama = "-"; if (tglM && tglM !== "-") { var parts = tglM.split('/'); if (parts.length === 3) { var dM = new Date(parts[2], parts[1] - 1, parts[0]); var now = new Date(); var diff = (now.getFullYear() - dM.getFullYear()) * 12 + (now.getMonth() - dM.getMonth()); if (now.getDate() < dM.getDate()) diff--; if (diff < 0) diff = 0; var y = Math.floor(diff / 12); var m = diff % 12; lama = (y > 0 ? y + " Tahun " : "") + (m > 0 ? m + " Bulan" : ""); if (lama === "") lama = "Baru Bergabung"; } }

@@ -186,6 +186,25 @@ function _getCachedUsersData() {
   return data;
 }
 
+// Resolve term (username atau No Anggota) menjadi No Anggota resmi dari sheet Users.
+// Kolom Users: [0] Username, [18] No Anggota.
+function _toNoAnggota(term) {
+  var q = String(term || '').trim();
+  if (!q) return '';
+  try {
+    var data = _getCachedUsersData();
+    var ql = q.toLowerCase();
+    for (var i = 1; i < data.length; i++) {
+      var usr = String(data[i][0] || '').trim().toLowerCase();
+      var no = String(data[i][18] || '').replace(/'/g, '').trim();
+      if (usr === ql || (no && no.toLowerCase() === ql)) {
+        return no || String(data[i][0] || q).trim();
+      }
+    }
+  } catch (e) {}
+  return q;
+}
+
 // _getRed = _getSetting; sinkronkan cache saat setting berubah
 function _getSettingCached(key, ttl) {
   var cached = _cacheGet('kp_set_' + key);
@@ -219,8 +238,10 @@ function _isKreditTokoBlocked(noAnggota) {
     var uData = sUsers.getDataRange().getValues();
     var q = String(noAnggota).trim().toLowerCase();
     for (var i = 1; i < uData.length; i++) {
-      if (String(uData[i][0]).trim().toLowerCase() === q) {
-        var blokir = String(uData[i][23] || '').trim().toLowerCase();
+      var u0 = String(uData[i][0] || '').trim().toLowerCase();
+      var u18 = String(uData[i][18] || '').replace(/'/g, '').trim().toLowerCase();
+      if (u0 === q || (u18 && u18 === q)) {
+        var blokir = String(uData[i][28] || '').trim().toLowerCase();
         return blokir === 'y' || blokir === 'yes' || blokir === '1' || blokir === 'blokir';
       }
     }
@@ -380,6 +401,8 @@ function importPembayaranPiutang(dataArray) {
     for (var j = 1; j < dataUs.length; j++) {
       var mn = String(dataUs[j][0]).trim();
       if (mn) memberMap[mn.toLowerCase()] = true;
+      var mn2 = String(dataUs[j][18] || '').replace(/'/g, '').trim();
+      if (mn2) memberMap[mn2.toLowerCase()] = true;
     }
 
     // Hitung total pembayaran per No Anggota yang sudah ada di PembayaranPiutang
@@ -455,9 +478,9 @@ function getOpsiPembayaranManual() {
     var members = [];
     for (var j = 1; j < dataUs.length; j++) {
       var un = String(dataUs[j][0] || '').trim();
-      var role = String(dataUs[j][1] || '');
+      var role = String(dataUs[j][3] || '');
       if (!un || role !== 'Anggota') continue;
-      members.push({ username: un, nama: String(dataUs[j][2] || '-') });
+      members.push({ username: un, noAnggota: String(dataUs[j][18] || un).replace(/'/g, '').trim(), nama: String(dataUs[j][2] || '-') });
     }
     var bayarMap = _getMemberPaymentMap();
     var sPi = _ensureKreditTokoSheet();
@@ -733,8 +756,9 @@ function loginUser(u, p) {
       var rowU = data[i][0];
       if (!rowU) continue;
       var sheetU = String(rowU).trim().toLowerCase();
+      var sheetNoA = String(data[i][18] || '').replace(/'/g, '').trim().toLowerCase();
       var sheetP = String(data[i][1]).trim();
-      var matchUser = (sheetU === inputU);
+      var matchUser = (sheetU === inputU) || (sheetNoA !== '' && sheetNoA === inputU);
 
       if (!matchUser && inputU !== "") {
          var numSheet = parseInt(sheetU, 10);
@@ -767,9 +791,9 @@ function loginUser(u, p) {
             } catch(e) {}
           }
 
-          var batas = _getBatasKreditAnggota(data[i][0]);
+var batas = _getBatasKreditAnggota(_toNoAnggota(data[i][0]));
           var limitGlobal = batas.effective;
-          var hutangBulanIni = _getKreditTokoBulanIni(data[i][0]);
+          var hutangBulanIni = _getKreditTokoBulanIni(_toNoAnggota(data[i][0]));
 
           return { 
             status: 'sukses', user: String(data[i][0]), nama: String(data[i][2]||'-'), 
@@ -784,13 +808,18 @@ outstanding: batas.outstanding,
             atasNama: String(data[i][13]||'-'), statusAnggota: statusAnggota, 
             jabatan: String(data[i][15]||'Anggota Kelompok'), 
             alamatKtp: String(data[i][16]||'-'), alamatDomisili: String(data[i][17]||'-'),
-            kodeToko: kelompok.toUpperCase(),
-            npwp: String(data[i][18]||'-'), 
-            jk: String(data[i][19]||'-'),
-            tempatLahir: String(data[i][20]||'-'),
-            tglLahir: _formatTglIndo(data[i][21]),
+            noAnggota: String(data[i][18]||data[i][0]).replace(/'/g, '').trim(),
+            tempatLahir: String(data[i][19]||'-'),
+            tglLahir: _formatTglIndo(data[i][20]),
+            jk: String(data[i][21]||'-'),
             kota: String(data[i][22]||'-'),
-            blokirPiutang: String(data[i][23]||'').trim()
+            npwp: String(data[i][23]||'-'),
+            statusPegawai: String(data[i][24]||'-'),
+            tglMpp: _formatTglIndo(data[i][25]),
+            tglPensiun: _formatTglIndo(data[i][26]),
+            tglKeluar: _formatTglIndo(data[i][27]),
+            kodeToko: kelompok.toUpperCase(),
+            blokirPiutang: String(data[i][28]||'').trim()
           };
         } else {
           return { status: 'error', msg: 'Password SALAH untuk pengguna: ' + String(data[i][0]) };
@@ -809,20 +838,22 @@ function getUserInfoByUsername(username) {
     var query = String(username).trim().toLowerCase();
     for (var i = 1; i < data.length; i++) {
       var rowU = String(data[i][0] || '').trim().toLowerCase();
+      var rowNoA = String(data[i][18] || '').replace(/'/g, '').trim().toLowerCase();
       if (!rowU) continue;
-      var match = (rowU === query);
+      var match = (rowU === query) || (rowNoA !== '' && rowNoA === query);
       if (!match && query !== "") {
         var numRow = parseInt(rowU, 10);
         var numQuery = parseInt(query, 10);
         if (!isNaN(numRow) && !isNaN(numQuery) && numRow === numQuery) match = true;
       }
       if (match) {
-        var batas = _getBatasKreditAnggota(data[i][0]);
+        var batas = _getBatasKreditAnggota(_toNoAnggota(data[i][0]));
         var limitGlobal = batas.effective;
-        var hutangBulanIni = _getKreditTokoBulanIni(data[i][0]);
+        var hutangBulanIni = _getKreditTokoBulanIni(_toNoAnggota(data[i][0]));
         
         return { status: 'sukses', data: {
           username: String(data[i][0] || ''),
+          noAnggota: String(data[i][18] || data[i][0]).replace(/'/g, '').trim(),
           nama: String(data[i][2] || '-'),
           kelompok: String(data[i][4] || '-'),
           statusAnggota: String(data[i][14] || 'Aktif'),
@@ -832,7 +863,7 @@ function getUserInfoByUsername(username) {
           limit: limitGlobal,
           sisaLimit: limitGlobal - hutangBulanIni,
           outstanding: batas.outstanding,
-          blokirPiutang: String(data[i][23]||'').trim()
+          blokirPiutang: String(data[i][28]||'').trim()
         } };
       }
     }
@@ -852,10 +883,13 @@ function getAllUsersFull() {
       rek: String(r[11]||''), namaBank: String(r[12]||''), atasNama: String(r[13]||''), 
       status: String(r[14]||'Aktif'), jabatan: String(r[15]||'Anggota Kelompok'),
       alamatKtp: String(r[16]||'-'), alamatDomisili: String(r[17]||'-'),
-      npwp: String(r[18]||'-'), jk: String(r[19]||'-'),
-      tempatLahir: String(r[20]||'-'), tglLahir: _formatTglIndo(r[21]),
-      kota: String(r[22]||'-'),
-      blokirPiutang: String(r[23]||'').trim()
+      noAnggota: String(r[18]||r[0]).replace(/'/g, '').trim(),
+      tempatLahir: String(r[19]||'-'), tglLahir: _formatTglIndo(r[20]),
+      jk: String(r[21]||'-'), kota: String(r[22]||'-'),
+      npwp: String(r[23]||'-'),
+      statusPegawai: String(r[24]||'-'), tglMpp: _formatTglIndo(r[25]), tglPensiun: _formatTglIndo(r[26]),
+      tglKeluar: _formatTglIndo(r[27]),
+      blokirPiutang: String(r[28]||'').trim()
     });
   }
   return users;
@@ -885,12 +919,17 @@ function getAnggotaListKasir() {
       jabatan: String(r[15] || 'Anggota Kelompok'),
       alamatKtp: String(r[16] || '-'),
       alamatDomisili: String(r[17] || '-'),
-      npwp: String(r[18] || '-'),
-      jk: String(r[19] || '-'),
-      tempatLahir: String(r[20] || '-'),
-      tglLahir: _formatTglIndo(r[21]),
+      noAnggota: String(r[18] || r[0]).replace(/'/g, '').trim(),
+      tempatLahir: String(r[19] || '-'),
+      tglLahir: _formatTglIndo(r[20]),
+      jk: String(r[21] || '-'),
       kota: String(r[22] || '-'),
-      blokirPiutang: String(r[23] || '').trim()
+      npwp: String(r[23] || '-'),
+      statusPegawai: String(r[24] || '-'),
+      tglMpp: _formatTglIndo(r[25]),
+      tglPensiun: _formatTglIndo(r[26]),
+      tglKeluar: _formatTglIndo(r[27]),
+      blokirPiutang: String(r[28] || '').trim()
     });
   }
   return users;
@@ -928,11 +967,11 @@ function updateProfilMandiri(username, passLama, passBaru, fotoBase64, nip, ktp,
     sheet.getRange(rowIndex, 14).setValue(atasnama || '-');
     sheet.getRange(rowIndex, 17).setValue(alamatKtp || '-'); 
     sheet.getRange(rowIndex, 18).setValue(alamatDomisili || '-'); 
-    sheet.getRange(rowIndex, 19).setValue("'" + npwp);
-    sheet.getRange(rowIndex, 20).setValue(jk);
-    sheet.getRange(rowIndex, 21).setValue(tempatLahir);
-    sheet.getRange(rowIndex, 22).setValue(tglLahir);
+    sheet.getRange(rowIndex, 20).setValue(tempatLahir);
+    sheet.getRange(rowIndex, 21).setValue(tglLahir);
+    sheet.getRange(rowIndex, 22).setValue(jk);
     sheet.getRange(rowIndex, 23).setValue(kota);
+    sheet.getRange(rowIndex, 24).setValue("'" + npwp);
 
     return { status: 'sukses', msg: 'Profil & Foto Diperbarui!', url: linkFoto };
   } catch (e) { return { status: 'error', msg: e.toString() }; }
@@ -953,7 +992,8 @@ function saveUserAdmin(mode, oldUsername, obj) {
       "'" + obj.username, obj.pass, obj.nama, obj.role, obj.kelompok, linkFotoBaru, 
       "'" + obj.nip, obj.tglMasuk, "'" + obj.ktp, obj.email, "'" + obj.hp, "'" + obj.rek, 
       obj.namaBank, obj.atasNama, obj.status, obj.jabatan, obj.alamatKtp, obj.alamatDomisili,
-      "'" + (obj.npwp || "-"), obj.jk || "-", obj.tempatLahir || "-", obj.tglLahir || "-", obj.kota || "-",
+      "'" + (obj.noAnggota || ""), obj.tempatLahir || "-", obj.tglLahir || "-", obj.jk || "-", obj.kota || "-",
+      "'" + (obj.npwp || "-"), obj.statusPegawai || "-", obj.tglMpp || "-", obj.tglPensiun || "-", obj.tglKeluar || "-",
       obj.blokirPiutang || ""
     ];
 
@@ -964,7 +1004,7 @@ function saveUserAdmin(mode, oldUsername, obj) {
       for (var i = 1; i < data.length; i++) {
         if (String(data[i][0]).trim() === String(oldUsername).trim()) {
           if (!linkFotoBaru) { rowData[5] = data[i][5]; } else { deleteFileFromDrive(data[i][5]); }
-          sheet.getRange(i + 1, 1, 1, 24).setValues([rowData]);
+          sheet.getRange(i + 1, 1, 1, 29).setValues([rowData]);
           _cacheRemove('kp_users');
           return { status: 'sukses', msg: 'Data diperbarui.' };
         }
@@ -991,10 +1031,10 @@ function toggleBlokirPiutangUser(username) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_USERS);
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][0]).trim() === String(username).trim()) {
-        var current = String(data[i][23] || '').trim().toLowerCase();
+      if (String(data[i][0]).trim() === String(username).trim() || String(data[i][18] || '').replace(/'/g, '').trim() === String(username).trim()) {
+        var current = String(data[i][28] || '').trim().toLowerCase();
         var newVal = (current === 'y' || current === 'yes' || current === '1' || current === 'blokir') ? '' : 'blokir';
-        sheet.getRange(i + 1, 24).setValue(newVal);
+        sheet.getRange(i + 1, 29).setValue(newVal);
         _cacheRemove('kp_users');
         return { status: 'sukses', msg: newVal === 'blokir' ? 'Piutang anggota diblokir.' : 'Blokir piutang dicabut.', blokir: newVal === 'blokir' };
       }
@@ -1238,6 +1278,7 @@ function perpanjangSemuaExpired(tglMulai, tglExp) {
 // Perpanjang semua voucher Expired milik satu No. Anggota
 function perpanjangVoucherAnggota(noAnggota, tglMulai, tglExp) {
   try {
+    noAnggota = _toNoAnggota(noAnggota);
     var sV = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_VOUCHERS);
     var dV = sV.getDataRange().getValues();
     if (dV.length < 2) return { status: 'error', msg: 'Tidak ada data voucher.' };
@@ -1272,6 +1313,7 @@ function perpanjangVoucherAnggota(noAnggota, tglMulai, tglExp) {
 function cekMember(noAnggota) {
   if (!noAnggota) return { status: 'error', msg: 'No. Anggota kosong!' };
   try {
+    noAnggota = _toNoAnggota(noAnggota);
     var dV = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_VOUCHERS).getDataRange().getValues();
     var found = false; var nama = ""; var res = []; var tA = 0, tB = 0, tU = 0, tBl = 0;
     var today = new Date();
@@ -1310,6 +1352,7 @@ function cekMember(noAnggota) {
 
 function ubahStatusMember(noAnggota, targetStatus) {
   try {
+    noAnggota = _toNoAnggota(noAnggota);
     var sV = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_VOUCHERS);
     var dV = sV.getDataRange().getValues();
     var count = 0;
@@ -1425,23 +1468,26 @@ function cariVoucherMulti(noAnggota) {
     var sUsers = ss.getSheetByName(SHEET_USERS);
     var uData = sUsers.getDataRange().getValues();
     var userInfo = null;
-    var uQuery = String(noAnggota).trim().toLowerCase();
+    var uQuery = String(_toNoAnggota(noAnggota)).trim().toLowerCase();
 
     for (var k = 1; k < uData.length; k++) {
       var rowUser = String(uData[k][0]).trim().toLowerCase();
-      if (rowUser === uQuery) {
-        var batas = _getBatasKreditAnggota(uData[k][0]);
+      var rowNoA = String(uData[k][18] || '').replace(/'/g, '').trim().toLowerCase();
+      if (rowUser === uQuery || (rowNoA !== '' && rowNoA === uQuery)) {
+        var memberNo = _toNoAnggota(uData[k][0]);
+        var batas = _getBatasKreditAnggota(memberNo);
         var limitGlobal = batas.effective;
-        var hutangBulanIni = _getKreditTokoBulanIni(uData[k][0]);
+        var hutangBulanIni = _getKreditTokoBulanIni(memberNo);
         userInfo = {
           username: String(uData[k][0]),
+          noAnggota: memberNo,
           nama: String(uData[k][2] || "-"),
           kelompok: String(uData[k][4] || "-"),
           foto: String(uData[k][5] || ""),
           limit: limitGlobal,
           sisaLimit: limitGlobal - hutangBulanIni,
           outstanding: batas.outstanding,
-          blokirPiutang: String(uData[k][23] || '').trim()
+          blokirPiutang: String(uData[k][28] || '').trim()
         };
         break;
       }
@@ -1485,10 +1531,10 @@ function cariVoucherMulti(noAnggota) {
 // Ringkasan pemakaian per bulan (12 bulan tahun berjalan) untuk kartu kasir/anggota.
 function getPemakaianBulananMember(noAnggota) {
   try {
+    var q = String(_toNoAnggota(noAnggota)).trim();
     var tahun = new Date().getFullYear();
     var data = _getCachedPiutangData();
     var totals = {};
-    var q = String(noAnggota).trim();
     for (var i = 1; i < data.length; i++) {
       var nM = String(data[i][6]).replace(/'/g, '').trim();
       if (nM !== q) continue;
@@ -1831,6 +1877,7 @@ function getLaporanData() {
 
 function getAnggotaData(noAnggota) {
   try {
+    noAnggota = _toNoAnggota(noAnggota);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var dVoucher = ss.getSheetByName(SHEET_VOUCHERS).getDataRange().getValues();
     var dLaporan = ss.getSheetByName(SHEET_LAPORAN).getDataRange().getValues();
@@ -1940,7 +1987,9 @@ function getSlipPotongan(noAnggota, bulan, tahun) {
     try {
       var sUsers = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_USERS).getDataRange().getValues();
       for(var j=1; j<sUsers.length; j++){
-         if(String(sUsers[j][0]).trim() === String(noAnggota).trim()){ 
+         var u0 = String(sUsers[j][0]).trim();
+         var u18 = String(sUsers[j][18] || '').replace(/'/g, '').trim();
+         if(u0 === String(noAnggota).trim() || (u18 && u18 === String(noAnggota).trim())){ 
              uNama = String(sUsers[j][2] || "-").trim(); 
              uNip = String(sUsers[j][6] || "-").trim(); 
              break; 
@@ -2087,6 +2136,7 @@ function saveKreditTokoFileToDrive(base64Data, fileName) {
 function addPiutangManual(noAnggota, notaToko, nilai, userToko, base64Photo, fileName) {
   try {
     if (!noAnggota) return { status: 'error', msg: 'Nomor anggota kosong.' };
+    noAnggota = _toNoAnggota(noAnggota);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sUsers = ss.getSheetByName(SHEET_USERS);
     var uData = sUsers.getDataRange().getValues();
@@ -2094,11 +2144,13 @@ function addPiutangManual(noAnggota, notaToko, nilai, userToko, base64Photo, fil
     var memberKelompok = '-';
     var uLower = String(noAnggota).trim().toLowerCase();
     for (var ui = 1; ui < uData.length; ui++) {
-      if (String(uData[ui][0]).trim().toLowerCase() === uLower) {
+      var uU = String(uData[ui][0]).trim().toLowerCase();
+      var uN = String(uData[ui][18] || '').replace(/'/g, '').trim().toLowerCase();
+      if (uU === uLower || (uN && uN === uLower)) {
         memberNama = String(uData[ui][2] || noAnggota);
         memberKelompok = String(uData[ui][4] || '-');
-        // Cek blokir piutang (kolom 24 / indeks 23)
-        var blokir = String(uData[ui][23] || '').trim().toLowerCase();
+        // Cek blokir piutang (kolom 29 / indeks 28)
+        var blokir = String(uData[ui][28] || '').trim().toLowerCase();
         if (blokir === 'y' || blokir === 'yes' || blokir === '1' || blokir === 'blokir') {
           return { status: 'error', msg: '❌ Anggota ' + noAnggota + ' (' + memberNama + ') sedang diblokir untuk transaksi piutang.' };
         }
@@ -2160,6 +2212,8 @@ function importPiutangTagihanAdmin(dataArray) {
     for (var ui = 1; ui < uData.length; ui++) {
       var k = String(uData[ui][0]).replace(/'/g, '').trim();
       if (k) userMap[k] = String(uData[ui][2] || k);
+      var k2 = String(uData[ui][18] || '').replace(/'/g, '').trim();
+      if (k2) userMap[k2] = String(uData[ui][2] || k2);
     }
     var tz = Session.getScriptTimeZone();
     var imported = 0;
@@ -2192,6 +2246,7 @@ function importPiutangTagihanAdmin(dataArray) {
 
 function getKreditTokoForMember(noAnggota) {
   try {
+    noAnggota = _toNoAnggota(noAnggota);
     var data = _getCachedPiutangData();
     var items = []; var total = 0;
     var tz = Session.getScriptTimeZone();
@@ -2289,6 +2344,12 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q) {
       userMap[key] = String(dataUsers[j][2] || "-");
       hpMap[key] = String(dataUsers[j][10] || "");
       emailMap[key] = String(dataUsers[j][9] || "");
+      var key2 = String(dataUsers[j][18] || '').replace(/'/g, '').trim();
+      if (key2) {
+        userMap[key2] = userMap[key];
+        hpMap[key2] = hpMap[key];
+        emailMap[key2] = emailMap[key];
+      }
     }
 
     var result = [];
@@ -2643,6 +2704,8 @@ function getRekapPembayaran() {
     for (var j = 1; j < dataUs.length; j++) {
       var key = String(dataUs[j][0]).trim();
       userMap[key] = { nama: String(dataUs[j][2] || "-"), kelompok: String(dataUs[j][4] || "-"), hp: String(dataUs[j][10] || "") };
+      var key2 = String(dataUs[j][18] || '').replace(/'/g, '').trim();
+      if (key2) userMap[key2] = userMap[key];
     }
 
     // Total piutang per No Anggota
@@ -2833,12 +2896,17 @@ function getMemberVoucherAdmin(username) {
     var uData = sUsers.getDataRange().getValues();
     var userInfo = null;
     var uLower = String(username).trim().toLowerCase();
-    
+    var memberNo = "";
+
     // Mencari informasi profil member
     for (var i = 1; i < uData.length; i++) {
-      if (String(uData[i][0]).trim().toLowerCase() === uLower) {
+      var uU = String(uData[i][0]).trim().toLowerCase();
+      var uNx = String(uData[i][18] || '').replace(/'/g, '').trim().toLowerCase();
+      if (uU === uLower || (uNx !== '' && uNx === uLower)) {
+        memberNo = String(uData[i][18] || uData[i][0]).replace(/'/g, '').trim();
         userInfo = {
           username: String(uData[i][0]),
+          noAnggota: memberNo,
           nama: String(uData[i][2] || "-"),
           kelompok: String(uData[i][4] || "-"),
           foto: String(uData[i][5] || "")
@@ -2854,10 +2922,12 @@ function getMemberVoucherAdmin(username) {
     var vouchers = [];
     var tz = Session.getScriptTimeZone();
     var today = new Date(); today.setHours(0,0,0,0);
+    var memberNoLower = String(memberNo).toLowerCase();
     
     // Mencari daftar voucher milik member
     for (var j = 1; j < vData.length; j++) {
-      if (String(vData[j][1]).trim().toLowerCase() === uLower) {
+      var vNo = String(vData[j][1]).replace(/'/g, '').trim().toLowerCase();
+      if (vNo === memberNoLower || vNo === uLower) {
         var ex = _parseDate(vData[j][7]);
         var startD = _parseDate(vData[j][8]);
         if(ex) ex.setHours(23,59,59,999);
@@ -2889,10 +2959,12 @@ function updateStatusVoucherMember(username, status) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_VOUCHERS);
     var data = sheet.getDataRange().getValues();
     var uLower = String(username).trim().toLowerCase();
+    var memberNo = _toNoAnggota(username).toLowerCase();
     var count = 0;
     
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][1]).trim().toLowerCase() === uLower) {
+      var vNo = String(data[i][1]).replace(/'/g, '').trim().toLowerCase();
+      if (vNo === memberNo || vNo === uLower) {
         // Hanya mengubah voucher yang belum terpakai
         if (String(data[i][6]).trim() !== 'Used') {
           sheet.getRange(i + 1, 7).setValue(status);
