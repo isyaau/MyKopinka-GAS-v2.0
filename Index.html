@@ -5559,10 +5559,6 @@
             h += '<span style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.5px;" id="' + uid + '-curlabel">Bulan Berjalan</span>';
             h += '<span style="font-size:15px; font-weight:900;" id="' + uid + '-cur">Rp -</span>';
             h += '</div>';
-            h += '<div style="display:flex; justify-content:space-between; margin-top:6px; padding:10px 4px 0;">';
-            h += '<span style="font-size:10px; font-weight:bold; color:#64748b;">TOTAL PEMAKAIAN</span>';
-            h += '<span style="font-size:13px; font-weight:800; color:#9a3412;">Rp ' + (Number(outstanding) || 0).toLocaleString('id-ID') + '</span>';
-            h += '</div>';
             h += '</div>';
             loadPemakaianBulanan(noAnggota, uid);
             return h;
