@@ -15,9 +15,13 @@ var FOLDER_ID = "18kCGyT26jGqXshHhaARqi9rmun_rC-vB";
 var FOLDER_NOTIF_ID = "1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT"; 
 var FOLDER_KREDIT_TOKO_ID = "1zFKB6N4vjpJtnY1k_G6c1hutIhshLYyW";
 
+// Versi aplikasi terpusat (tampil di halaman login & header semua panel/role)
+var APP_VERSION = "2.0.0";
+function getAppVersion() { return APP_VERSION; }
+
 function doGet(e) {
   return HtmlService.createTemplateFromFile('index').evaluate()
-      .setTitle('Portal Kopinka v2.0')
+      .setTitle('Portal Kopinka v' + APP_VERSION)
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
