@@ -9553,6 +9553,17 @@ var skel = '';
 
         var _kasirRekapTimer = null;
 
+        // Urutkan: belum terkirim (bukan 'Terkirim') paling atas, 'Terkirim' paling akhir,
+        // lalu dari yang terbaru ke yang terlama di tiap kelompok.
+        function _sortKasirRekap(arr) {
+            arr.sort(function (a, b) {
+                var pa = (a.notif === 'Terkirim') ? 1 : 0;
+                var pb = (b.notif === 'Terkirim') ? 1 : 0;
+                if (pa !== pb) return pa - pb;
+                return (b.waktuRaw || 0) - (a.waktuRaw || 0);
+            });
+        }
+
         function fetchKasirRekapServer() {
             var bln = document.getElementById('filter-kasir-rekap-bulan') ? document.getElementById('filter-kasir-rekap-bulan').value : 'ALL';
             var thn = document.getElementById('filter-kasir-rekap-tahun') ? document.getElementById('filter-kasir-rekap-tahun').value : '';
@@ -9565,7 +9576,7 @@ var skel = '';
                     return Swal.fire('Error', 'Gagal memuat data rekap kredit.', 'error');
                 }
                 kasirRekapData = res.data;
-                kasirRekapData.sort(function (a, b) { return (b.waktuRaw || 0) - (a.waktuRaw || 0); });
+                _sortKasirRekap(kasirRekapData);
                 kasirRekapJasa = Number(res.totalBiayaJasa) || 0;
                 kasirRekapFiltered = kasirRekapData;
                 kasirRekapPage = 1;
@@ -9742,8 +9753,20 @@ var skel = '';
             ids = (ids || []).filter(function (x) {
                 return x !== '' && x !== undefined && x !== null;
             });
+            // Update status lokal segera agar tampak berubah tanpa menunggu reload
+            var updated = false;
+            kasirRekapFiltered.forEach(function (h) {
+                if (h.id && ids.indexOf(h.id) !== -1 && h.notif !== 'Terkirim') {
+                    h.notif = 'Terkirim';
+                    updated = true;
+                }
+            });
+            if (updated) {
+                _sortKasirRekap(kasirRekapFiltered);
+                renderKasirRekapTable();
+            }
             if (ids.length === 0) return;
-            google.script.run.withSuccessHandler(function () { loadKasirRekap(); })
+            google.script.run.withSuccessHandler(function () { })
                 .withFailureHandler(function () { })
                 .markPiutangNotifBulk(ids, 'Terkirim');
         }
