@@ -16,7 +16,7 @@ var FOLDER_NOTIF_ID = "1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT";
 var FOLDER_KREDIT_TOKO_ID = "1zFKB6N4vjpJtnY1k_G6c1hutIhshLYyW";
 
 // Versi aplikasi terpusat (tampil di halaman login & header semua panel/role)
-var APP_VERSION = "2.0.1";
+var APP_VERSION = "2.1.0";
 function getAppVersion() { return APP_VERSION; }
 
 function doGet(e) {
