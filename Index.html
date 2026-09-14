@@ -3387,14 +3387,9 @@
                     <div class="angka" id="krk-stat-total">Rp 0</div>
                 </div>
                 <div class="admin-card ac-green">
-                    <h4>Transaksi Toko Sutomo</h4>
-                    <div class="angka" id="krk-stat-trans-sutomo">Rp 0</div>
-                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Jasa Toko Sutomo: <b id="krk-stat-jasa-sutomo">Rp 0</b></div>
-                </div>
-                <div class="admin-card ac-blue">
-                    <h4>Transaksi Toko INKA</h4>
-                    <div class="angka" id="krk-stat-trans-inka">Rp 0</div>
-                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Jasa Toko INKA: <b id="krk-stat-jasa-inka">Rp 0</b></div>
+                    <h4 id="krk-stat-toko-title">Transaksi Toko</h4>
+                    <div class="angka" id="krk-stat-trans-toko">Rp 0</div>
+                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Jasa (1,5%): <b id="krk-stat-jasa-toko">Rp 0</b></div>
                 </div>
             </div>
 
@@ -9562,6 +9557,7 @@ var skel = '';
             var bln = document.getElementById('filter-kasir-rekap-bulan') ? document.getElementById('filter-kasir-rekap-bulan').value : 'ALL';
             var thn = document.getElementById('filter-kasir-rekap-tahun') ? document.getElementById('filter-kasir-rekap-tahun').value : '';
             var q = (document.getElementById('search-kasir-rekap') ? document.getElementById('search-kasir-rekap').value : '').toString().toLowerCase().trim();
+            var tokoFilter = (userToko && userToko.toko && userToko.toko !== '-') ? userToko.toko : ((userToko && userToko.kodeToko) ? userToko.kodeToko : '');
             showLoading("Memuat rekap kredit...");
             google.script.run.withSuccessHandler(function (res) {
                 hideLoading();
@@ -9579,7 +9575,7 @@ var skel = '';
                 hideLoading();
                 console.error(err);
                 Swal.fire('Error', 'Gagal memuat rekap kredit: ' + err.message, 'error');
-            }).getSemuaPiutangAdmin(bln, thn, '', '', q);
+            }).getSemuaPiutangAdmin(bln, thn, '', '', q, tokoFilter);
         }
 
         function applyFilterKasirRekap() {
@@ -9588,19 +9584,17 @@ var skel = '';
         }
 
         function renderKasirRekapStats() {
-            var total = 0, totTransSutomo = 0, totTransInka = 0;
+            var total = 0, totTrans = 0;
             kasirRekapFiltered.forEach(function (h) {
                 total += Number(h.sisa) || 0;
-                if (h.store === 'SUTOMO') totTransSutomo += Number(h.nilai) || 0;
-                else totTransInka += Number(h.nilai) || 0;
+                totTrans += Number(h.nilai) || 0;
             });
-            var jasaSutomo = Math.round(totTransSutomo * 0.015);
-            var jasaInka = Math.round(totTransInka * 0.015);
-            safeSetText('krk-stat-total', 'Rp ' + (total + jasaSutomo + jasaInka).toLocaleString('id-ID'));
-            safeSetText('krk-stat-trans-sutomo', 'Rp ' + totTransSutomo.toLocaleString('id-ID'));
-            safeSetText('krk-stat-jasa-sutomo', 'Rp ' + jasaSutomo.toLocaleString('id-ID'));
-            safeSetText('krk-stat-trans-inka', 'Rp ' + totTransInka.toLocaleString('id-ID'));
-            safeSetText('krk-stat-jasa-inka', 'Rp ' + jasaInka.toLocaleString('id-ID'));
+            var jasa = Math.round(totTrans * 0.015);
+            var namaToko = (userToko && userToko.toko && userToko.toko !== '-') ? userToko.toko : ((userToko && userToko.kodeToko) ? userToko.kodeToko : 'Toko');
+            safeSetText('krk-stat-total', 'Rp ' + (total + jasa).toLocaleString('id-ID'));
+            safeSetText('krk-stat-toko-title', 'Transaksi ' + namaToko);
+            safeSetText('krk-stat-trans-toko', 'Rp ' + totTrans.toLocaleString('id-ID'));
+            safeSetText('krk-stat-jasa-toko', 'Rp ' + jasa.toLocaleString('id-ID'));
         }
 
         function renderKasirRekapTable() {

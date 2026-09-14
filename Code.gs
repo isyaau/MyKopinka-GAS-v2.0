@@ -2334,7 +2334,7 @@ function prosesVoucherPiutang(kode, userToko, notaToko, base64Photo, fileName, n
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
-function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q) {
+function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q, tokoFilter) {
   try {
     var dataPiutang = _getCachedPiutangData();
     if (dataPiutang.length < 2) return { status: 'sukses', data: [] };
@@ -2368,6 +2368,7 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q) {
     var fSd = (startDate === undefined || startDate === null) ? '' : String(startDate).trim();
     var fEd = (endDate === undefined || endDate === null) ? '' : String(endDate).trim();
     var fQ = (q === undefined || q === null) ? '' : String(q).trim().toLowerCase();
+    var fToko = (tokoFilter === undefined || tokoFilter === null) ? '' : String(tokoFilter).trim().toLowerCase();
 
     function _matchPeriod(waktuStr) {
       var wp = String(waktuStr || '').split(' ')[0].split('/');
@@ -2416,6 +2417,13 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q) {
       }
 
       var stNota = _storeFromNota(String(row[2]));
+
+      if (fToko !== '') {
+        var keyT = (stNota.key || '').toLowerCase();
+        var namaT = (stNota.nama || '').toLowerCase();
+        var tokoCol = String(row[3] || '').trim().toLowerCase();
+        if (keyT !== fToko && namaT !== fToko && tokoCol !== fToko) continue;
+      }
 
       result.push({
         waktu: waktuStr,
