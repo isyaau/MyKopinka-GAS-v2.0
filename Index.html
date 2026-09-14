@@ -2981,6 +2981,7 @@
                             <th>No Anggota</th>
                             <th>Nama Pelanggan</th>
                             <th>Nota</th>
+                            <th>Toko</th>
                             <th>Kode Transaksi</th>
                             <th>Nominal</th>
                             <th>Notifikasi</th>
@@ -2989,7 +2990,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="8" style="text-align:center;">Memuat data...</td>
+                            <td colspan="9" style="text-align:center;">Memuat data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -3414,8 +3415,8 @@
                             <th>No Anggota</th>
                             <th>Nama Pelanggan</th>
                             <th>Nota</th>
-                            <th>Kode Transaksi</th>
                             <th>Toko</th>
+                            <th>Kode Transaksi</th>
                             <th>Petugas</th>
                             <th>Nominal</th>
                             <th>Notifikasi</th>
@@ -4691,7 +4692,7 @@
             if (!tb) return;
             if (kreditTokoFilterBusy) return;
             kreditTokoFilterBusy = true;
-            var widths = ['short', 'xshort', 'medium', 'short', 'xshort', 'short', 'short', 'short', 'short', 'short', 'xshort', 'xshort'];
+            var widths = ['short', 'xshort', 'medium', 'short', 'short', 'xshort', 'short', 'short', 'short'];
             var skel = '';
             for (var si = 0; si < 5; si++) {
                 skel += '<tr class="skeleton-row">';
@@ -8181,7 +8182,7 @@
             if (tb && !silent) {
                 var skel = '';
                 for (var si = 0; si < 5; si++) {
-                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
+                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
                 }
                 tb.innerHTML = skel;
                 showLoading("Memuat Data Kredit Toko...");
@@ -8541,7 +8542,7 @@
             var start = (kreditTokoAdminPage - 1) * limit;
             var pagData = filteredHutangAdmin.slice(start, start + limit);
 
-            if (pagData.length === 0) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">Data Kosong.</td></tr>'; }
+            if (pagData.length === 0) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px;">Data Kosong.</td></tr>'; }
             else {
                 pagData.forEach(function (h, i) {
                     var globalIdx = start + i;
@@ -8563,6 +8564,7 @@
                         '<td>' + h.noAnggota + '</td>' +
                         '<td><b>' + h.nama + '</b></td>' +
                         '<td>' + (h.nota || '-') + '</td>' +
+                        '<td><b>' + (h.toko && h.toko.trim() !== '' ? h.toko : (h.storeNama || '-')) + '</b></td>' +
                         '<td style="font-family:monospace; font-size:11px;">' + (h.kodeVoucher || h.id || '-') + '</td>' +
                         '<td style="color:#e74c3c; font-weight:700;">Rp ' + (Number(h.nilai) || 0).toLocaleString('id-ID') + '</td>' +
                         '<td style="text-align:center;">' + notifBadge + '</td>' +
@@ -9628,8 +9630,8 @@ var skel = '';
                         '<td><b>' + (h.noAnggota || '-') + '</b></td>' +
                         '<td>' + (h.nama || '-') + '</td>' +
                         '<td>' + (h.nota || '-') + '</td>' +
+                        '<td><b>' + (h.toko && h.toko.trim() !== '' ? h.toko : (h.storeNama || '-')) + '</b></td>' +
                         '<td style="font-size:12px;">' + kode + '</td>' +
-                        '<td>' + (h.toko || '-') + '</td>' +
                         '<td>' + (h.petugas || '-') + '</td>' +
                         '<td style="text-align:right;">' + nilai.toLocaleString('id-ID') + '</td>' +
                         '<td>' + chipNotif + '</td>' +
