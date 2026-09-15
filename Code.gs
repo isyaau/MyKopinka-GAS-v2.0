@@ -1665,8 +1665,8 @@ function redeemMassalPiutang(arrKode, userToko, notaToko, base64Photo, fileName,
               vAngg = dVoucher[i][1]; 
               vKel = dVoucher[i][4];
 
-              // Append ke laporan mutasi untuk setiap voucher yang berhasil diredeem
-              sLaporan.appendRow([timestamp, (idSys + "-" + k) + " / " + idPi, "'" + notaToko, "'" + dVoucher[i][0], userToko.nama, "'" + userToko.user, valNum, vName, "'" + vAngg, vKel]);
+              // Append ke laporan mutasi untuk setiap voucher (nilai voucher asli, bukan nominal piutang)
+              sLaporan.appendRow([timestamp, (idSys + "-" + k) + " / " + idPi, "'" + notaToko, "'" + dVoucher[i][0], userToko.nama, "'" + userToko.user, dVoucher[i][5], vName, "'" + vAngg, vKel]);
             }
             break;
         }
@@ -1706,9 +1706,9 @@ function catatPiutangVoucher(kode, userToko, notaToko, base64Photo, fileName, no
       var fn = fileName || ('piu_' + idPi + '.jpg');
       fileId = saveKreditTokoFileToDrive(base64Photo, fn);
     }
-    // Simpan ke mutasi
+    // Simpan ke mutasi (nilai voucher asli, bukan nominal piutang)
     var sLaporan = ss.getSheetByName(SHEET_LAPORAN);
-    sLaporan.appendRow([timestamp, idSys + " / " + idPi, "'" + notaToko, "'" + dVoucher[vRow-1][0], userToko.nama, "'" + userToko.user, valNum, dVoucher[vRow-1][2], "'" + dVoucher[vRow-1][1], dVoucher[vRow-1][4]]);
+    sLaporan.appendRow([timestamp, idSys + " / " + idPi, "'" + notaToko, "'" + dVoucher[vRow-1][0], userToko.nama, "'" + userToko.user, dVoucher[vRow-1][5], dVoucher[vRow-1][2], "'" + dVoucher[vRow-1][1], dVoucher[vRow-1][4]]);
     
     // Ubah status voucher menjadi Used agar tidak muncul active lagi
     sVoucher.getRange(vRow, 7).setValue('Used');
@@ -1777,8 +1777,8 @@ function catatPiutangMassal(arrKode, userToko, notaToko, base64Photo, fileName, 
           kodes.push(dVoucher[i][0]);
           vName = dVoucher[i][2]; vAngg = dVoucher[i][1]; vKel = dVoucher[i][4];
 
-          // Simpan ke mutasi per voucher
-          sLaporan.appendRow([timestamp, (idSys + "-" + k) + " / " + idPi, "'" + notaToko, "'" + dVoucher[i][0], userToko.nama, "'" + userToko.user, valNum, vName, "'" + vAngg, vKel]);
+          // Simpan ke mutasi per voucher (nilai voucher asli, bukan nominal piutang)
+          sLaporan.appendRow([timestamp, (idSys + "-" + k) + " / " + idPi, "'" + notaToko, "'" + dVoucher[i][0], userToko.nama, "'" + userToko.user, dVoucher[i][5], vName, "'" + vAngg, vKel]);
           
           // Ubah status voucher menjadi Used
           sVoucher.getRange(i + 1, 7).setValue('Used');
@@ -2318,8 +2318,8 @@ function prosesVoucherPiutang(kode, userToko, notaToko, base64Photo, fileName, n
     sVoucher.getRange(vRow, 7).setValue('Used');
     // simpan sebagai piutang
     var idPi = 'PIU-' + (new Date().getTime() + 2000).toString().slice(-8); // ID Transaksi Piutang
-    // simpan di laporan mutasi dengan ID gabungan
-    sLaporan.appendRow([timestamp, idSys + " / " + idPi, "'" + notaToko, "'" + vData[0], userToko.nama, "'" + userToko.user, valNum, vData[2], "'" + vData[1], vData[4]]);
+    // simpan di laporan mutasi dengan ID gabungan (nilai voucher asli, bukan nominal piutang)
+    sLaporan.appendRow([timestamp, idSys + " / " + idPi, "'" + notaToko, "'" + vData[0], userToko.nama, "'" + userToko.user, vData[5], vData[2], "'" + vData[1], vData[4]]);
 
     var fileId = '';
     if (base64Photo && base64Photo.length > 50) {
