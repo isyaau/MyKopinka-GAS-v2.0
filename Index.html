@@ -2859,6 +2859,14 @@
             <!-- FILTER PERIODE (shared) -->
             <div class="filter-container">
                 <div style="display:flex; gap:10px; flex-wrap:wrap; width:100%;">
+                    <div style="flex:1; min-width:150px;">
+                        <label>Filter Toko:</label>
+                        <select id="filter-kredit-toko-store" onchange="applyFilterTokoKreditToko()">
+                            <option value="ALL">Semua Toko</option>
+                            <option value="SUTOMO">Toko Sutomo</option>
+                            <option value="INKA">Toko INKA</option>
+                        </select>
+                    </div>
                     <div style="flex:1; min-width:200px;">
                         <label>Bulan & Tahun:</label>
                         <div style="display:flex; gap:5px;">
@@ -3363,6 +3371,12 @@
                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap;">
                     <input type="text" id="search-kasir-rekap" style="flex:2; min-width:150px;"
                         placeholder="🔍 Cari Nama / No Anggota..." oninput="applyFilterKasirRekap()">
+                    <select id="filter-kasir-rekap-toko" class="filter-select"
+                        style="flex:1; min-width:120px; max-width:150px;" onchange="applyFilterKasirRekap()">
+                        <option value="ALL">Semua Toko</option>
+                        <option value="SUTOMO">Toko Sutomo</option>
+                        <option value="INKA">Toko INKA</option>
+                    </select>
                     <select id="filter-kasir-rekap-bulan" class="filter-select" style="flex:1; min-width:120px; max-width:150px;"
                         onchange="applyFilterKasirRekap()">
                         <option value="ALL">Semua Bulan</option>
@@ -8411,6 +8425,11 @@
             loadRekapHutangAdmin(true);
         }
 
+        function applyFilterTokoKreditToko() {
+            if (currentSubTabKreditToko === 'anggota') { applyFilterRekapAnggota(); }
+            else { applyFilterKreditTokoAdmin(); }
+        }
+
         function prefetchRekapHutangAdmin() {
             var elBln = document.getElementById('filter-kredit-toko-bulan');
             if (!elBln) return;
@@ -8712,8 +8731,10 @@
                 var sd = document.getElementById('filter-kredit-toko-start').value;
                 var ed = document.getElementById('filter-kredit-toko-end').value;
                 var notifFilter = document.getElementById('filter-kredit-toko-notif').value;
+                var tokoFilter = (document.getElementById('filter-kredit-toko-store') || { value: 'ALL' }).value;
 
                 filteredHutangAdmin = rawDataHutangAdmin.filter(function (h) {
+                    if (tokoFilter !== 'ALL' && h.store !== tokoFilter) return false;
                     var matchText = (h.nama + " " + h.noAnggota).toLowerCase().indexOf(q) !== -1;
                     if (!matchText) return false;
                     var wp = (h.waktu || '').split(' ')[0].split('/');
@@ -9060,8 +9081,11 @@ var skel = '';
             var q = '';
             var elQ = document.getElementById('search-rekap-anggota');
             if (elQ) q = elQ.value.toLowerCase().trim();
+            var tokoF = (document.getElementById('filter-kredit-toko-store') || { value: 'ALL' }).value;
 
             filteredRekapAnggota = rawRekapAnggota.filter(function (a) {
+                if (tokoF === 'SUTOMO' && (Number(a.transSutomo) || 0) <= 0) return false;
+                if (tokoF === 'INKA' && (Number(a.transInka) || 0) <= 0) return false;
                 if (!q) return true;
                 return (a.noAnggota && a.noAnggota.toLowerCase().indexOf(q) !== -1) ||
                        (a.nama && a.nama.toLowerCase().indexOf(q) !== -1) ||
@@ -9798,7 +9822,19 @@ var skel = '';
                 if (thnEl) thnEl.value = thnDef;
                 kasirRekapFilterDefaulted = true;
             }
+            var tokoSel = document.getElementById('filter-kasir-rekap-toko');
+            if (tokoSel && !tokoSel.dataset.defaulted) {
+                tokoSel.value = _detectKasirToko();
+                tokoSel.dataset.defaulted = '1';
+            }
             fetchKasirRekapServer();
+        }
+
+        function _detectKasirToko() {
+            var probe = String((userToko && (userToko.toko || userToko.nama || userToko.kelompok || userToko.kodeToko)) || '').toLowerCase();
+            if (probe.indexOf('sutomo') !== -1) return 'SUTOMO';
+            if (probe.indexOf('inka') !== -1) return 'INKA';
+            return 'ALL';
         }
 
         var _kasirRekapTimer = null;
@@ -9818,7 +9854,11 @@ var skel = '';
             var bln = document.getElementById('filter-kasir-rekap-bulan') ? document.getElementById('filter-kasir-rekap-bulan').value : 'ALL';
             var thn = document.getElementById('filter-kasir-rekap-tahun') ? document.getElementById('filter-kasir-rekap-tahun').value : '';
             var q = (document.getElementById('search-kasir-rekap') ? document.getElementById('search-kasir-rekap').value : '').toString().toLowerCase().trim();
-            var tokoFilter = (userToko && userToko.toko && userToko.toko !== '-') ? userToko.toko : ((userToko && userToko.kodeToko) ? userToko.kodeToko : '');
+            var tokoSel = document.getElementById('filter-kasir-rekap-toko');
+            var tokoVal = tokoSel ? tokoSel.value : 'ALL';
+            var tokoFilter = '';
+            if (tokoVal === 'SUTOMO' || tokoVal === 'INKA') tokoFilter = tokoVal;
+            else if (tokoVal !== 'ALL') tokoFilter = (userToko && userToko.toko && userToko.toko !== '-') ? userToko.toko : ((userToko && userToko.kodeToko) ? userToko.kodeToko : '');
             showLoading("Memuat rekap kredit...");
             google.script.run.withSuccessHandler(function (res) {
                 hideLoading();
@@ -9851,7 +9891,13 @@ var skel = '';
                 totTrans += Number(h.nilai) || 0;
             });
             var jasa = Math.round(totTrans * 0.015);
-            var namaToko = (userToko && userToko.toko && userToko.toko !== '-') ? userToko.toko : ((userToko && userToko.kodeToko) ? userToko.kodeToko : 'Toko');
+            var namaToko = ('Toko Saya');
+            var tokoSel = document.getElementById('filter-kasir-rekap-toko');
+            var tokoVal = tokoSel ? tokoSel.value : 'ALL';
+            if (tokoVal === 'SUTOMO') namaToko = 'Toko Sutomo';
+            else if (tokoVal === 'INKA') namaToko = 'Toko INKA';
+            else if (tokoVal === 'ALL') namaToko = 'Semua Toko';
+            else namaToko = (userToko && userToko.toko && userToko.toko !== '-') ? userToko.toko : ((userToko && userToko.kodeToko) ? userToko.kodeToko : 'Toko');
             safeSetText('krk-stat-total', 'Rp ' + (total + jasa).toLocaleString('id-ID'));
             safeSetText('krk-stat-toko-title', 'Transaksi ' + namaToko);
             safeSetText('krk-stat-trans-toko', 'Rp ' + totTrans.toLocaleString('id-ID'));
