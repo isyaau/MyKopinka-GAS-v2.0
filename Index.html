@@ -1992,6 +1992,8 @@
                     class="bi bi-people-fill"></i> Kelola Users</button>
             <button class="nav-btn hidden" id="tab-kasir-rekap-kredit" onclick="switchTab('kasir-rekap-kredit')"><i
                     class="bi bi-whatsapp"></i> Rekap Kredit</button>
+            <button class="nav-btn hidden" id="tab-kasir-broadcast" onclick="switchTab('kasir-broadcast')"><i
+                    class="bi bi-megaphone-fill"></i> Broadcast</button>
             <button class="nav-btn hidden" id="tab-admin" onclick="switchTab('admin')"><i
                     class="bi bi-ticket-perforated-fill"></i> Kelola Voucher</button>
             <button class="nav-btn hidden" id="tab-admin-potongan" onclick="switchTab('admin-potongan')"><i
@@ -3433,6 +3435,39 @@
             </div>
         </div>
 
+        <div id="view-kasir-broadcast" class="hidden">
+            <h3 style="text-align:left; color:#2c3e50; border-bottom: 2px solid #3498db; padding-bottom:10px;"><i
+                    class="bi bi-megaphone-fill" style="color:#3498db;"></i> Broadcast Pengumuman</h3>
+            <p style="font-size:13px; color:#7f8c8d; margin-top:0;">Kirim pengumuman ke <b>semua anggota</b>. Pesan akan
+                muncul di menu Notifikasi pada panel para anggota.</p>
+
+            <div class="admin-section"
+                style="border-color:#3498db; background:#f9f9f9; padding:15px; max-width:600px;">
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>Judul Pengumuman:</label>
+                    <input type="text" id="kbr-judul" placeholder="Contoh: Informasi Penutupan Unit">
+                </div>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>Isi Pesan:</label>
+                    <textarea id="kbr-pesan" rows="6" placeholder="Ketik isi pengumuman lengkap..."></textarea>
+                </div>
+                <div class="form-group"
+                    style="margin-bottom:10px; background:#fff; padding:15px; border-radius:12px; border:1px solid #eee;">
+                    <label>Lampiran File (Opsional - PDF/Gambar):</label>
+                    <input type="file" id="kbr-lampiran" accept="image/*,.pdf"
+                        style="padding:10px; font-size:13px; background:white;">
+                    <small style="color:#7f8c8d; font-size:10px; display:block; margin-top:5px;">File akan tersimpan ke
+                        folder Google Drive khusus.</small>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:5px; flex-wrap:wrap;">
+                    <button style="background-color:#3498db; width:auto; padding:14px 25px; flex:1; min-width:200px;"
+                        onclick="kirimBroadcastKasir()"><i class="bi bi-send-fill"></i> KIRIM BROADCAST</button>
+                    <button style="background-color:#95a5a6; width:auto; padding:14px 25px;"
+                        onclick="resetBroadcastKasir()"><i class="bi bi-arrow-counterclockwise"></i> RESET</button>
+                </div>
+            </div>
+        </div>
+
         <div id="view-anggota-delivery" class="hidden">
             <h3 style="text-align:left; color:#2c3e50; border-bottom: 2px solid #27ae60; padding-bottom:10px;"><i
                     class="bi bi-chat-dots-fill" style="color:#27ae60;"></i> Hubungi Kami</h3>
@@ -4540,6 +4575,7 @@
                     <label>Tipe Target:</label>
                     <select id="n-tipe" onchange="toggleNotifDetail()">
                         <option value="Semua">Semua User</option>
+                        <option value="Semua Anggota">Semua Anggota</option>
                         <option value="Toko">Toko (Kasir/Admin)</option>
                         <option value="Kelompok">Kelompok Anggota</option>
                         <option value="Personal">Personal (No. Anggota)</option>
@@ -5412,7 +5448,7 @@
                 } else { switchTab('anggota-voucher'); setTimeout(function () { loadMyKreditToko(true); }, 200); }
             }
             else {
-                ['tab-redeem', 'tab-laporan', 'tab-kasir-kelola-akun', 'tab-kasir-rekap-kredit'].forEach(function (id) { document.getElementById(id).classList.remove('hidden'); });
+                ['tab-redeem', 'tab-laporan', 'tab-kasir-kelola-akun', 'tab-kasir-rekap-kredit', 'tab-kasir-broadcast'].forEach(function (id) { document.getElementById(id).classList.remove('hidden'); });
                 document.getElementById('info-toko').innerHTML = "Lokasi: " + userToko.toko; document.getElementById('info-role').innerHTML = "Kasir: " + res.user + " <span class='badge-role role-kasir'>KASIR</span>"; switchTab('redeem');
             }
         }
@@ -6581,7 +6617,7 @@
         function loadLaporan() {
             showLoading("Menarik Laporan..."); google.script.run.withSuccessHandler(function (data) {
                 hideLoading(); var fullData = data.slice().reverse();
-                if (currentRole !== 'Admin') { var namaKasir = userToko.user; rawDataLaporan = fullData.filter(function (r) { return r[5] === namaKasir; }); document.getElementById('filter-mutasi-toko').style.display = 'none'; document.getElementById('admin-trend-box').style.display = 'none'; } else { rawDataLaporan = fullData; document.getElementById('filter-mutasi-toko').style.display = 'inline-block'; document.getElementById('admin-trend-box').style.display = 'block'; }
+                if (currentRole !== 'Admin') { var namaKasir = String(userToko.user || '').trim(); rawDataLaporan = fullData.filter(function (r) { return String(r[5] || '').replace(/^'+/, '').trim() === namaKasir; }); document.getElementById('filter-mutasi-toko').style.display = 'none'; document.getElementById('admin-trend-box').style.display = 'none'; } else { rawDataLaporan = fullData; document.getElementById('filter-mutasi-toko').style.display = 'inline-block'; document.getElementById('admin-trend-box').style.display = 'block'; }
                 var tokos = []; rawDataLaporan.forEach(function (r) { if (r[4] && tokos.indexOf(r[4]) === -1) { tokos.push(r[4]); } }); var sel = document.getElementById('filter-mutasi-toko'); sel.innerHTML = '<option value="ALL">Semua Toko</option>'; tokos.forEach(function (t) { sel.innerHTML += '<option value="' + t + '">' + t + '</option>'; }); applyFilterMutasi();
             }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).getLaporanData();
         }
@@ -6799,7 +6835,7 @@
                 pagData.forEach(function (n, i) {
                     var realIndex = start + i;
                     var targetText = n.tipe;
-                    if (n.tipe !== 'Semua') targetText += " (" + n.detail + ")";
+                    if (targetText !== 'Semua' && n.detail && String(n.detail).trim() !== '' && String(n.detail).trim() !== '-') targetText += " (" + n.detail + ")";
 
                     var btnArsip = n.status === 'Aktif' ? '<button style="background:#f39c12; padding:6px; font-size:11px; margin-bottom:5px; width:auto;" onclick="hapusNotif(' + n.rowIdx + ', \'arsip\'); event.stopPropagation();">Arsipkan</button> ' : '';
                     var lampIcon = n.lampiranId ? '<span style="color:#e74c3c; font-size:12px; font-weight:bold; margin-left:5px;"><i class="bi bi-paperclip"></i></span>' : '';
@@ -6849,8 +6885,9 @@
             var tipe = document.getElementById('n-tipe').value;
             var group = document.getElementById('n-detail-group');
             var label = document.getElementById('n-detail-label');
-            if (tipe === 'Semua') {
+            if (tipe === 'Semua' || tipe === 'Semua Anggota') {
                 group.style.display = 'none';
+                safeSetValue('n-detail', '');
             } else {
                 group.style.display = 'block';
                 if (tipe === 'Toko') label.innerText = 'Kode Toko (Contoh: TK, TKBW):';
@@ -6867,7 +6904,7 @@
             var fileInp = document.getElementById('n-lampiran');
             var file = fileInp.files ? fileInp.files[0] : null;
 
-            if (tipe !== 'Semua' && detail === "") return Swal.fire('Perhatian', 'Detail target wajib diisi!', 'warning');
+            if (tipe !== 'Semua' && tipe !== 'Semua Anggota' && detail === "") return Swal.fire('Perhatian', 'Detail target wajib diisi!', 'warning');
             if (judul === "" || pesan === "") return Swal.fire('Perhatian', 'Judul dan Pesan wajib diisi!', 'warning');
 
             tutupModal('modal-crud-notif');
@@ -6890,6 +6927,53 @@
             }
         }
 
+        function resetBroadcastKasir() {
+            safeSetValue('kbr-judul', '');
+            safeSetValue('kbr-pesan', '');
+            document.getElementById('kbr-lampiran').value = '';
+        }
+
+        function kirimBroadcastKasir() {
+            var judul = document.getElementById('kbr-judul').value.trim();
+            var pesan = document.getElementById('kbr-pesan').value.trim();
+            if (judul === "" || pesan === "") return Swal.fire('Perhatian', 'Judul dan Pesan wajib diisi!', 'warning');
+
+            var fileInp = document.getElementById('kbr-lampiran');
+            var file = fileInp.files ? fileInp.files[0] : null;
+
+            Swal.fire({
+                title: 'Kirim Broadcast?',
+                text: 'Pengumuman akan dikirim ke SEMUA ANGGOTA dan muncul di menu Notifikasi mereka.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3498db',
+                cancelButtonColor: '#95a5a6',
+                confirmButtonText: 'Ya, Kirim!'
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                showLoading("Mengirim Broadcast...");
+                var doSend = function (b64, fname) {
+                    google.script.run.withSuccessHandler(function (res) {
+                        hideLoading();
+                        if (res.status === 'sukses') {
+                            Swal.fire('Sukses', res.msg, 'success');
+                            resetBroadcastKasir();
+                            pullUserNotifikasi();
+                        } else {
+                            Swal.fire('Gagal', res.msg, 'error');
+                        }
+                    }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveNotifikasi('Semua Anggota', '', judul, pesan, b64, fname);
+                };
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) { doSend(e.target.result, file.name); };
+                    reader.readAsDataURL(file);
+                } else {
+                    doSend("", "");
+                }
+            });
+        }
+
         function hapusNotif(rowIdx, aksi) {
             var txt = aksi === 'hapus' ? 'Hapus permanen notifikasi ini beserta lampirannya (jika ada)?' : 'Arsipkan notifikasi ini agar tidak tampil lagi di user?';
             Swal.fire({ title: 'Konfirmasi', text: txt, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then(function (res) {
@@ -6909,7 +6993,7 @@
         // ==========================================
         function downloadTemplateNotif() {
             var wb = XLSX.utils.book_new();
-            var ws = XLSX.utils.aoa_to_sheet([["Tipe (Semua/Toko/Kelompok/Personal)", "Detail Target (Kosongkan jika Semua)", "Judul", "Pesan"]]);
+            var ws = XLSX.utils.aoa_to_sheet([["Tipe (Semua/Semua Anggota/Toko/Kelompok/Personal)", "Detail Target (Kosongkan jika Semua/Semua Anggota)", "Judul", "Pesan"]]);
             XLSX.utils.book_append_sheet(wb, ws, "Notifikasi");
             XLSX.writeFile(wb, "Template_Broadcast_Notif.xlsx");
         }

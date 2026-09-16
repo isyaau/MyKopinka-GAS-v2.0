@@ -614,6 +614,7 @@ function getNotifikasiUser(role, kodeToko, kelompok, username) {
         var isMatch = false;
 
         if (tipe === 'semua') { isMatch = true; } 
+        else if (tipe === 'semua anggota' && role === 'Anggota') { isMatch = true; }
         else if (tipe === 'toko' && (role === 'Kasir' || role === 'Admin Potongan')) { if (detail === String(kodeToko).toLowerCase().trim()) isMatch = true; } 
         else if (tipe === 'kelompok' && role === 'Anggota') { if (detail === String(kelompok).toLowerCase().trim()) isMatch = true; } 
         else if (tipe === 'personal') { if (detail === String(username).toLowerCase().trim()) isMatch = true; }
@@ -1870,13 +1871,17 @@ function getLaporanData() {
       if (!data[i][0]) continue;
       lap.push([ 
           data[i][0] ? Utilities.formatDate(_parseDate(data[i][0]), tz, "yyyy-MM-dd HH:mm:ss") : "-", 
-          String(data[i][1]||"-"), String(data[i][2]||"-"), String(data[i][3]||"-"), 
-          String(data[i][4]||"-"), String(data[i][5]||"-"), Number(data[i][6]||0), 
-          String(data[i][7]||"-"), String(data[i][8]||"-"), String(data[i][9]||"-") 
+          _cleanLaporanStr(data[i][1]), _cleanLaporanStr(data[i][2]), _cleanLaporanStr(data[i][3]), 
+          _cleanLaporanStr(data[i][4]), _cleanLaporanStr(data[i][5]), Number(data[i][6]||0), 
+          _cleanLaporanStr(data[i][7]), _cleanLaporanStr(data[i][8]), _cleanLaporanStr(data[i][9]) 
       ]);
     }
     return lap;
   } catch (e) { return []; }
+}
+
+function _cleanLaporanStr(v) {
+  return String(v == null ? "-" : v).replace(/^'+/, '').trim();
 }
 
 function getAnggotaData(noAnggota) {
