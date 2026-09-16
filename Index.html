@@ -3439,55 +3439,24 @@
         <div id="view-kasir-broadcast" class="hidden">
             <h3 style="text-align:left; color:#2c3e50; border-bottom: 2px solid #3498db; padding-bottom:10px;"><i
                     class="bi bi-megaphone-fill" style="color:#3498db;"></i> Broadcast Pengumuman</h3>
+            <p style="font-size:13px; color:#555;">Kirim pengumuman ke <b>semua anggota</b> dan kelola histori broadcast Anda.</p>
 
-            <div class="admin-section"
-                style="border-color:#3498db; background:#f9f9f9; padding:15px; max-width:600px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                    <label id="kbr-form-title" style="margin:0; color:#2c3e50; font-weight:bold;"><i
-                            class="bi bi-plus-circle" style="color:#3498db;"></i> Buat Broadcast Baru</label>
-                    <button style="background:#e74c3c; width:auto; padding:6px 12px; font-size:11px; display:none;"
-                        id="kbr-btn-cancel-edit" onclick="batalEditBroadcastKasir()"><i
-                            class="bi bi-x-circle"></i> Batal Edit</button>
-                </div>
-                <p style="font-size:12.5px; color:#7f8c8d; margin:0 0 12px 0;">Pesan akan dikirim ke <b>semua
-                        anggota</b> dan muncul di menu Notifikasi panel mereka. Lampiran tersimpan aman di folder Google
-                    Drive khusus notifikasi.</p>
-                <div class="form-group" style="margin-bottom:10px;">
-                    <label>Judul Pengumuman:</label>
-                    <input type="text" id="kbr-judul" placeholder="Contoh: Informasi Penutupan Unit">
-                </div>
-                <div class="form-group" style="margin-bottom:10px;">
-                    <label>Isi Pesan:</label>
-                    <textarea id="kbr-pesan" rows="6" placeholder="Ketik isi pengumuman lengkap..."></textarea>
-                </div>
-                <div class="form-group"
-                    style="margin-bottom:10px; background:#fff; padding:15px; border-radius:12px; border:1px solid #eee;">
-                    <label>Lampiran File (Opsional - PDF/Gambar):</label>
-                    <input type="file" id="kbr-lampiran" accept="image/*,.pdf"
-                        style="padding:10px; font-size:13px; background:white;">
-                    <small style="color:#7f8c8d; font-size:10px; display:block; margin-top:5px;">Saat edit, file baru akan
-                        menggantikan lampiran lama. File tersimpan ke folder: <a
-                            href="https://drive.google.com/drive/folders/1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT"
-                            target="_blank" style="color:#3498db;">Drive Notifikasi</a>.</small>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:5px; flex-wrap:wrap;">
-                    <button style="background-color:#3498db; width:auto; padding:14px 25px; flex:1; min-width:200px;"
-                        onclick="kirimBroadcastKasir()"><i class="bi bi-send-fill"></i> <span
-                            id="kbr-btn-label">KIRIM BROADCAST</span></button>
-                    <button style="background-color:#95a5a6; width:auto; padding:14px 25px;"
-                        onclick="resetBroadcastKasir()"><i class="bi bi-arrow-counterclockwise"></i> RESET</button>
-                </div>
+            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:15px;">
+                <button style="background-color:#3498db; width:auto; padding:12px 20px; font-size:13px;"
+                    onclick="bukaModalBroadcastKasir()"><i class="bi bi-plus-circle"></i> Buat Broadcast Baru</button>
+                <button style="background:#17a2b8; width:auto; padding:12px 20px; font-size:13px;"
+                    onclick="loadKasirBroadcast()"><i class="bi bi-arrow-clockwise"></i> Refresh Data</button>
             </div>
 
-            <div class="admin-section" style="border-color:#34495e; background:#fff; padding:15px; margin-top:16px;">
+            <div class="admin-section" style="border-color:#34495e; background:#fff; padding:15px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                     <h3 style="margin:0; border:none; padding:0; color:#2c3e50; font-size:16px;"><i
                             class="bi bi-clock-history" style="color:#34495e;"></i> Histori Broadcast Saya</h3>
-                    <button style="background:#17a2b8; width:auto; padding:8px 15px;"
-                        onclick="loadKasirBroadcast()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
                 </div>
                 <p style="font-size:12.5px; color:#7f8c8d; margin:0 0 10px 0;">Daftar pengumuman yang pernah Anda buat
-                    beserta jumlah anggota yang sudah membaca.</p>
+                    beserta jumlah anggota yang sudah membaca. Lampiran tersimpan di folder
+                    <a href="https://drive.google.com/drive/folders/1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT"
+                        target="_blank" style="color:#3498db;">Drive Notifikasi</a>.</p>
                 <div class="table-responsive" style="max-height:450px;">
                     <table id="tabel-kasir-broadcast" class="data-table">
                         <thead>
@@ -4654,6 +4623,48 @@
                     onclick="tutupModal('modal-crud-notif')">BATAL</button>
                 <button style="background-color:#3498db; padding:15px; width:60%; font-size:14px;"
                     onclick="simpanNotifAdmin()"><i class="bi bi-send-fill"></i> KIRIM SEKARANG</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-crud-broadcast" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 600px; text-align:left;">
+            <button class="close-btn" onclick="tutupModal('modal-crud-broadcast')">×</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; border-bottom: 2px solid #3498db; padding-bottom:15px;">
+                <h3 id="kbr-form-title" style="margin:0; color:#2c3e50;"><i class="bi bi-plus-circle"
+                        style="color:#3498db;"></i> Buat Broadcast Baru</h3>
+                <button style="background:#e74c3c; width:auto; padding:6px 12px; font-size:11px; display:none;"
+                    id="kbr-btn-cancel-edit" onclick="batalEditBroadcastKasir()"><i
+                        class="bi bi-x-circle"></i> Batal Edit</button>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr; gap: 12px;">
+
+                <div class="form-group" style="margin-bottom:5px;">
+                    <label>Judul Pengumuman:</label>
+                    <input type="text" id="kbr-judul" placeholder="Contoh: Informasi Penutupan Unit">
+                </div>
+
+                <div class="form-group" style="margin-bottom:5px;">
+                    <label>Isi Pesan:</label>
+                    <textarea id="kbr-pesan" rows="5" placeholder="Ketik isi pengumuman lengkap..."></textarea>
+                </div>
+
+                <div class="form-group"
+                    style="margin-bottom:5px; background:#f9f9f9; padding:15px; border-radius:12px; border:1px solid #eee;">
+                    <label>Lampiran File (Opsional - PDF/Gambar):</label>
+                    <input type="file" id="kbr-lampiran" accept="image/*,.pdf"
+                        style="padding:10px; font-size:13px; background:white;">
+                    <small style="color:#7f8c8d; font-size:10px; display:block; margin-top:5px;">Saat edit, file baru akan
+                        menggantikan lampiran lama. File tersimpan ke folder Google Drive khusus notifikasi.</small>
+                </div>
+
+            </div>
+            <div style="display:flex; gap:10px; margin-top:25px;">
+                <button style="background-color:#95a5a6; padding:15px; width:40%; font-size:14px;"
+                    onclick="tutupModal('modal-crud-broadcast')">BATAL</button>
+                <button style="background-color:#3498db; padding:15px; width:60%; font-size:14px;"
+                    onclick="kirimBroadcastKasir()"><i class="bi bi-send-fill"></i> <span
+                        id="kbr-btn-label">KIRIM BROADCAST</span></button>
             </div>
         </div>
     </div>
@@ -6984,6 +6995,16 @@
             document.getElementById('kbr-btn-cancel-edit').style.display = 'none';
         }
 
+        function bukaModalBroadcastKasir() {
+            resetBroadcastKasir();
+            var m = document.getElementById('modal-crud-broadcast');
+            if (m) {
+                m.classList.remove('hidden');
+                setTimeout(function () { m.classList.add('show'); }, 50);
+                document.body.classList.add('modal-open');
+            }
+        }
+
         function kirimBroadcastKasir() {
             var judul = document.getElementById('kbr-judul').value.trim();
             var pesan = document.getElementById('kbr-pesan').value.trim();
@@ -7022,6 +7043,7 @@
         function doneBroadcast(res) {
             hideLoading();
             if (res.status === 'sukses') {
+                tutupModal('modal-crud-broadcast');
                 Swal.fire('Sukses', res.msg, 'success');
                 resetBroadcastKasir();
                 loadKasirBroadcast();
@@ -7045,7 +7067,7 @@
             if (!tb) return;
             tb.innerHTML = '';
             if (kasirBroadcastData.length === 0) {
-                tb.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:25px; color:#7f8c8d;">Belum ada broadcast yang Anda buat. Gunakan form di atas untuk membuat pengumuman.</td></tr>';
+                tb.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:25px; color:#7f8c8d;">Belum ada broadcast yang Anda buat. Gunakan tombol "Buat Broadcast Baru" untuk membuat pengumuman.</td></tr>';
                 return;
             }
             kasirBroadcastData.forEach(function (n, i) {
@@ -7082,12 +7104,16 @@
             var ft = document.getElementById('kbr-form-title'); if (ft) ft.innerHTML = '<i class="bi bi-pencil-square" style="color:#8e44ad;"></i> Edit Broadcast: ' + n.judul;
             safeSetText('kbr-btn-label', 'UPDATE BROADCAST');
             document.getElementById('kbr-btn-cancel-edit').style.display = 'inline-block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            var m = document.getElementById('modal-crud-broadcast');
+            if (m) {
+                m.classList.remove('hidden');
+                setTimeout(function () { m.classList.add('show'); }, 50);
+                document.body.classList.add('modal-open');
+            }
         }
 
         function batalEditBroadcastKasir() {
             resetBroadcastKasir();
-            Swal.fire('Info', 'Mode edit dibatalkan.', 'info');
         }
 
         function hapusBroadcastKasir(idx, aksi) {
