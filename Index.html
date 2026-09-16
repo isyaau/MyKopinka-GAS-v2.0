@@ -6766,6 +6766,7 @@
                 }
                 return true;
             });
+            mutasiFiltered.sort(function (a, b) { return String(b[0]).localeCompare(String(a[0])); });
 
             mutasiPage = 1;
             renderTableMutasi();
