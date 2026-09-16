@@ -1938,9 +1938,14 @@ function getLaporanData() {
     var data = sheet.getDataRange().getValues();
     var lap = []; var tz = Session.getScriptTimeZone();
     for (var i = 1; i < data.length; i++) {
-      if (!data[i][0]) continue;
+      if (!data[i][0] && !data[i][1] && !data[i][2]) continue;
+      var w = "-";
+      if (data[i][0]) {
+        try { w = Utilities.formatDate(_parseDate(data[i][0]), tz, "yyyy-MM-dd HH:mm:ss"); }
+        catch (e1) { w = String(data[i][0]); }
+      }
       lap.push([ 
-          data[i][0] ? Utilities.formatDate(_parseDate(data[i][0]), tz, "yyyy-MM-dd HH:mm:ss") : "-", 
+          w, 
           _cleanLaporanStr(data[i][1]), _cleanLaporanStr(data[i][2]), _cleanLaporanStr(data[i][3]), 
           _cleanLaporanStr(data[i][4]), _cleanLaporanStr(data[i][5]), Number(data[i][6]||0), 
           _cleanLaporanStr(data[i][7]), _cleanLaporanStr(data[i][8]), _cleanLaporanStr(data[i][9]) 
