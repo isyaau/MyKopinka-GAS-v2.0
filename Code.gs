@@ -676,14 +676,84 @@ function getSemuaNotifikasiAdmin() {
            pesan: String(data[i][4]),
            status: String(data[i][5]),
            lampiranId: String(data[i][6] || ""),
-           readCount: readCount
+           readCount: readCount,
+           pembuat: String(data[i][8] || "")
        });
     }
     return res;
   } catch(e) { return []; }
 }
 
-function saveNotifikasi(tipe, detail, judul, pesan, fileBase64, fileName) {
+function getNotifikasiKasir(username) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NOTIF);
+    if (!sheet) return [];
+    var data = sheet.getDataRange().getValues();
+    var tz = Session.getScriptTimeZone();
+    var res = [];
+    var q = String(username || '').trim().toLowerCase();
+    for (var i = data.length - 1; i >= 1; i--) {
+      var pembuat = String(data[i][8] || '').trim();
+      if (pembuat === '') continue;
+      if (pembuat.toLowerCase() !== q) continue;
+      var dibacaOleh = String(data[i][7] || "");
+      var readCount = dibacaOleh ? dibacaOleh.split(',').filter(function (x) { return x.trim() !== ''; }).length : 0;
+      res.push({
+        rowIdx: i + 1,
+        waktu: data[i][0] ? Utilities.formatDate(_parseDate(data[i][0]), tz, "dd/MM/yyyy HH:mm") : "-",
+        tipe: String(data[i][1]),
+        detail: String(data[i][2] || "-"),
+        judul: String(data[i][3]),
+        pesan: String(data[i][4]),
+        status: String(data[i][5]),
+        lampiranId: String(data[i][6] || ""),
+        readCount: readCount,
+        pembuat: pembuat
+      });
+    }
+    return res;
+  } catch (e) { return []; }
+}
+
+function updateNotifikasiKasir(rowIdx, judul, pesan, fileBase64, fileName, username) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NOTIF);
+    if(!sheet) return {status: 'error', msg: 'Sheet Notifikasi belum dibuat!'};
+    var q = String(username || '').trim().toLowerCase();
+    var pembuat = String(sheet.getRange(rowIdx, 9).getValue() || '').trim();
+    if (pembuat === '' || pembuat.toLowerCase() !== q) return {status: 'error', msg: 'Anda tidak berhak mengedit pengumuman ini.'};
+    if (String(judul || '').trim() === '' || String(pesan || '').trim() === '') return {status: 'error', msg: 'Judul dan Pesan wajib diisi!'};
+
+    if (fileBase64 && fileBase64.length > 50) {
+      var oldFileId = String(sheet.getRange(rowIdx, 7).getValue() || '');
+      if (oldFileId) deleteFileFromDrive(oldFileId);
+      var cleanFileName = fileName || ("Lampiran_" + new Date().getTime());
+      var fileIdBaru = saveNotifFileToDrive(fileBase64, cleanFileName);
+      sheet.getRange(rowIdx, 7).setValue(fileIdBaru);
+    }
+    sheet.getRange(rowIdx, 1).setValue(new Date());
+    sheet.getRange(rowIdx, 4).setValue(String(judul).trim());
+    sheet.getRange(rowIdx, 5).setValue(String(pesan).trim());
+    sheet.getRange(rowIdx, 6).setValue("Aktif");
+    return {status: 'sukses', msg: 'Broadcast berhasil diperbarui.'};
+  } catch(e) { return {status: 'error', msg: e.toString()}; }
+}
+
+function hapusNotifKasir(rowIdx, username) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NOTIF);
+    if(!sheet) return {status: 'error', msg: 'Sheet Notifikasi belum dibuat!'};
+    var q = String(username || '').trim().toLowerCase();
+    var pembuat = String(sheet.getRange(rowIdx, 9).getValue() || '').trim();
+    if (pembuat === '' || pembuat.toLowerCase() !== q) return {status: 'error', msg: 'Anda tidak berhak menghapus pengumuman ini.'};
+    var fileIdLama = String(sheet.getRange(rowIdx, 7).getValue() || '');
+    if (fileIdLama) deleteFileFromDrive(fileIdLama);
+    sheet.deleteRow(rowIdx);
+    return {status: 'sukses', msg: 'Broadcast & Lampirannya dihapus permanen.'};
+  } catch(e) { return {status: 'error', msg: e.toString()}; }
+}
+
+function saveNotifikasi(tipe, detail, judul, pesan, fileBase64, fileName, pembuat) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NOTIF);
     if(!sheet) return {status: 'error', msg: 'Sheet Notifikasi belum dibuat!'};
@@ -695,7 +765,7 @@ function saveNotifikasi(tipe, detail, judul, pesan, fileBase64, fileName) {
     }
     
     var waktu = new Date();
-    sheet.appendRow([waktu, tipe, detail, judul, pesan, "Aktif", fileIdBaru, ""]);
+    sheet.appendRow([waktu, tipe, detail, judul, pesan, "Aktif", fileIdBaru, "", String(pembuat || "").trim()]);
     return {status: 'sukses', msg: 'Notifikasi berhasil dikirim.'};
   } catch(e) { return {status: 'error', msg: e.toString()}; }
 }
@@ -733,12 +803,12 @@ function uploadNotifExcel(dataArray) {
         
         if (!tipe || !judul || !pesan) continue; 
         
-        // Col G (Lampiran) & Col H (Dibaca) diset kosong
-        newDataToInsert.push([waktuStr, tipe, detail, judul, pesan, "Aktif", "", ""]);
+        // Col G (Lampiran), Col H (Dibaca), Col I (Pembuat) diset sesuai
+        newDataToInsert.push([waktuStr, tipe, detail, judul, pesan, "Aktif", "", "", ""]);
     }
 
     if (newDataToInsert.length > 0) {
-      sheet.getRange(sheet.getLastRow() + 1, 1, newDataToInsert.length, 8).setValues(newDataToInsert);
+      sheet.getRange(sheet.getLastRow() + 1, 1, newDataToInsert.length, 9).setValues(newDataToInsert);
       return { status: 'sukses', msg: "Berhasil broadcast " + newDataToInsert.length + " notifikasi via Excel." };
     } else {
       return { status: 'error', msg: "Format Excel salah atau data kosong." };

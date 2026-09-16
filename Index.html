@@ -2065,6 +2065,7 @@
                             <th>Waktu</th>
                             <th>Target</th>
                             <th>Judul Pengumuman</th>
+                            <th>Dibuat Oleh</th>
                             <th>Jml Dibaca</th>
                             <th>Status</th>
                             <th>Aksi</th>
@@ -3438,11 +3439,19 @@
         <div id="view-kasir-broadcast" class="hidden">
             <h3 style="text-align:left; color:#2c3e50; border-bottom: 2px solid #3498db; padding-bottom:10px;"><i
                     class="bi bi-megaphone-fill" style="color:#3498db;"></i> Broadcast Pengumuman</h3>
-            <p style="font-size:13px; color:#7f8c8d; margin-top:0;">Kirim pengumuman ke <b>semua anggota</b>. Pesan akan
-                muncul di menu Notifikasi pada panel para anggota.</p>
 
             <div class="admin-section"
                 style="border-color:#3498db; background:#f9f9f9; padding:15px; max-width:600px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                    <label id="kbr-form-title" style="margin:0; color:#2c3e50; font-weight:bold;"><i
+                            class="bi bi-plus-circle" style="color:#3498db;"></i> Buat Broadcast Baru</label>
+                    <button style="background:#e74c3c; width:auto; padding:6px 12px; font-size:11px; display:none;"
+                        id="kbr-btn-cancel-edit" onclick="batalEditBroadcastKasir()"><i
+                            class="bi bi-x-circle"></i> Batal Edit</button>
+                </div>
+                <p style="font-size:12.5px; color:#7f8c8d; margin:0 0 12px 0;">Pesan akan dikirim ke <b>semua
+                        anggota</b> dan muncul di menu Notifikasi panel mereka. Lampiran tersimpan aman di folder Google
+                    Drive khusus notifikasi.</p>
                 <div class="form-group" style="margin-bottom:10px;">
                     <label>Judul Pengumuman:</label>
                     <input type="text" id="kbr-judul" placeholder="Contoh: Informasi Penutupan Unit">
@@ -3456,14 +3465,47 @@
                     <label>Lampiran File (Opsional - PDF/Gambar):</label>
                     <input type="file" id="kbr-lampiran" accept="image/*,.pdf"
                         style="padding:10px; font-size:13px; background:white;">
-                    <small style="color:#7f8c8d; font-size:10px; display:block; margin-top:5px;">File akan tersimpan ke
-                        folder Google Drive khusus.</small>
+                    <small style="color:#7f8c8d; font-size:10px; display:block; margin-top:5px;">Saat edit, file baru akan
+                        menggantikan lampiran lama. File tersimpan ke folder: <a
+                            href="https://drive.google.com/drive/folders/1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT"
+                            target="_blank" style="color:#3498db;">Drive Notifikasi</a>.</small>
                 </div>
                 <div style="display:flex; gap:10px; margin-top:5px; flex-wrap:wrap;">
                     <button style="background-color:#3498db; width:auto; padding:14px 25px; flex:1; min-width:200px;"
-                        onclick="kirimBroadcastKasir()"><i class="bi bi-send-fill"></i> KIRIM BROADCAST</button>
+                        onclick="kirimBroadcastKasir()"><i class="bi bi-send-fill"></i> <span
+                            id="kbr-btn-label">KIRIM BROADCAST</span></button>
                     <button style="background-color:#95a5a6; width:auto; padding:14px 25px;"
                         onclick="resetBroadcastKasir()"><i class="bi bi-arrow-counterclockwise"></i> RESET</button>
+                </div>
+            </div>
+
+            <div class="admin-section" style="border-color:#34495e; background:#fff; padding:15px; margin-top:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                    <h3 style="margin:0; border:none; padding:0; color:#2c3e50; font-size:16px;"><i
+                            class="bi bi-clock-history" style="color:#34495e;"></i> Histori Broadcast Saya</h3>
+                    <button style="background:#17a2b8; width:auto; padding:8px 15px;"
+                        onclick="loadKasirBroadcast()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                </div>
+                <p style="font-size:12.5px; color:#7f8c8d; margin:0 0 10px 0;">Daftar pengumuman yang pernah Anda buat
+                    beserta jumlah anggota yang sudah membaca.</p>
+                <div class="table-responsive" style="max-height:450px;">
+                    <table id="tabel-kasir-broadcast" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Target</th>
+                                <th>Judul / Pesan</th>
+                                <th>Dibaca</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding:20px;">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -4686,6 +4728,9 @@
         var kasirAnggotaPage = 1;
         var kasirAnggotaLimit = 10;
 
+        var kasirBroadcastData = [];
+        var kasirBroadcastEditIdx = null;
+
         var rawDataLaporan = [];
         var mutasiFiltered = [];
         var mutasiPage = 1;
@@ -5019,6 +5064,7 @@
             else if (tab === 'kelola-akun') { loadKelolaAkunAdmin(); }
             else if (tab === 'kasir-kelola-akun') { loadKasirKelolaAkun(); }
             else if (tab === 'kasir-rekap-kredit') { loadKasirRekap(); }
+            else if (tab === 'kasir-broadcast') { resetBroadcastKasir(); loadKasirBroadcast(); }
             else if (tab === 'admin-potongan') {
                 var d = new Date();
                 safeSetValue('filter-pot-bulan', d.getMonth() + 1);
@@ -6830,7 +6876,7 @@
             var pagData = adminNotifData.slice(start, start + adminNotifLimit);
 
             if (pagData.length === 0) {
-                tb.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada pengumuman.</td></tr>';
+                tb.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">Belum ada pengumuman.</td></tr>';
             } else {
                 pagData.forEach(function (n, i) {
                     var realIndex = start + i;
@@ -6851,6 +6897,7 @@
                         '<b style="font-size:13px; color:#2c3e50;">' + n.judul + '</b>' + lampIcon + '<br>',
                         '<span style="font-size:11px;color:#7f8c8d;">' + potongPesan + '</span>',
                         '</td>',
+                        '<td style="text-align:center;"><span style="font-size:11px; color:#7f8c8d;">' + (n.pembuat || '-') + '</span></td>',
                         '<td style="text-align:center;"><b>' + n.readCount + '</b> User</td>',
                         '<td><span class="badge-status" style="background:' + stCol + ';">' + n.status + '</span></td>',
                         '<td>',
@@ -6915,7 +6962,7 @@
                     hideLoading();
                     if (res.status === 'sukses') { Swal.fire('Sukses', res.msg, 'success'); loadAdminNotifikasi(); }
                     else { Swal.fire('Gagal', res.msg, 'error'); }
-                }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveNotifikasi(tipe, detail, judul, pesan, b64, fname);
+                }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveNotifikasi(tipe, detail, judul, pesan, b64, fname, userToko.user);
             };
 
             if (file) {
@@ -6928,9 +6975,13 @@
         }
 
         function resetBroadcastKasir() {
+            kasirBroadcastEditIdx = null;
             safeSetValue('kbr-judul', '');
             safeSetValue('kbr-pesan', '');
             document.getElementById('kbr-lampiran').value = '';
+            var ft = document.getElementById('kbr-form-title'); if (ft) ft.innerHTML = '<i class="bi bi-plus-circle" style="color:#3498db;"></i> Buat Broadcast Baru';
+            safeSetText('kbr-btn-label', 'KIRIM BROADCAST');
+            document.getElementById('kbr-btn-cancel-edit').style.display = 'none';
         }
 
         function kirimBroadcastKasir() {
@@ -6940,29 +6991,23 @@
 
             var fileInp = document.getElementById('kbr-lampiran');
             var file = fileInp.files ? fileInp.files[0] : null;
+            var editing = kasirBroadcastEditIdx !== null;
 
             Swal.fire({
-                title: 'Kirim Broadcast?',
-                text: 'Pengumuman akan dikirim ke SEMUA ANGGOTA dan muncul di menu Notifikasi mereka.',
+                title: editing ? 'Update Broadcast?' : 'Kirim Broadcast?',
+                text: editing ? 'Perubahan akan langsung terlihat di menu Notifikasi anggota.' : 'Pengumuman akan dikirim ke SEMUA ANGGOTA dan muncul di menu Notifikasi mereka.',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3498db',
                 cancelButtonColor: '#95a5a6',
-                confirmButtonText: 'Ya, Kirim!'
+                confirmButtonText: editing ? 'Ya, Update!' : 'Ya, Kirim!'
             }).then(function (result) {
                 if (!result.isConfirmed) return;
-                showLoading("Mengirim Broadcast...");
+                showLoading(editing ? "Memperbarui Broadcast..." : "Mengirim Broadcast...");
                 var doSend = function (b64, fname) {
-                    google.script.run.withSuccessHandler(function (res) {
-                        hideLoading();
-                        if (res.status === 'sukses') {
-                            Swal.fire('Sukses', res.msg, 'success');
-                            resetBroadcastKasir();
-                            pullUserNotifikasi();
-                        } else {
-                            Swal.fire('Gagal', res.msg, 'error');
-                        }
-                    }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveNotifikasi('Semua Anggota', '', judul, pesan, b64, fname);
+                    var run = editing
+                        ? google.script.run.withSuccessHandler(function (res) { doneBroadcast(res); }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).updateNotifikasiKasir(kasirBroadcastEditIdx, judul, pesan, b64, fname, userToko.user)
+                        : google.script.run.withSuccessHandler(function (res) { doneBroadcast(res); }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveNotifikasi('Semua Anggota', '', judul, pesan, b64, fname, userToko.user);
                 };
                 if (file) {
                     var reader = new FileReader();
@@ -6970,6 +7015,101 @@
                     reader.readAsDataURL(file);
                 } else {
                     doSend("", "");
+                }
+            });
+        }
+
+        function doneBroadcast(res) {
+            hideLoading();
+            if (res.status === 'sukses') {
+                Swal.fire('Sukses', res.msg, 'success');
+                resetBroadcastKasir();
+                loadKasirBroadcast();
+                pullUserNotifikasi();
+            } else {
+                Swal.fire('Gagal', res.msg, 'error');
+            }
+        }
+
+        function loadKasirBroadcast() {
+            showLoading("Memuat Histori Broadcast...");
+            google.script.run.withSuccessHandler(function (res) {
+                hideLoading();
+                kasirBroadcastData = res || [];
+                renderKasirBroadcast();
+            }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).getNotifikasiKasir(userToko.user);
+        }
+
+        function renderKasirBroadcast() {
+            var tb = document.querySelector('#tabel-kasir-broadcast tbody');
+            if (!tb) return;
+            tb.innerHTML = '';
+            if (kasirBroadcastData.length === 0) {
+                tb.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:25px; color:#7f8c8d;">Belum ada broadcast yang Anda buat. Gunakan form di atas untuk membuat pengumuman.</td></tr>';
+                return;
+            }
+            kasirBroadcastData.forEach(function (n, i) {
+                var targetText = n.tipe;
+                if (targetText !== 'Semua' && n.detail && String(n.detail).trim() !== '' && String(n.detail).trim() !== '-') targetText += " (" + n.detail + ")";
+                var lampIcon = n.lampiranId ? '<span style="color:#e74c3c; font-size:12px; font-weight:bold; margin-left:5px;" title="Ada lampiran"><i class="bi bi-paperclip"></i></span>' : '';
+                var potongPesan = String(n.pesan).length > 55 ? String(n.pesan).substring(0, 55) + '...' : n.pesan;
+                var stCol = String(n.status).toLowerCase() === 'aktif' ? '#27ae60' : '#95a5a6';
+                var btnArsip = String(n.status).toLowerCase() !== 'aktif' ? '' : '<button style="background:#f39c12; padding:6px; font-size:11px; margin-bottom:5px; width:auto; display:block;" onclick="hapusBroadcastKasir(' + i + ', \'arsip\')"><i class="bi bi-archive"></i> Arsip</button>';
+                tb.innerHTML += [
+                    '<tr>',
+                    '<td><span>' + n.waktu + '</span></td>',
+                    '<td><b style="color:#2980b9;">' + targetText + '</b></td>',
+                    '<td><b style="color:#2c3e50;">' + n.judul + '</b>' + lampIcon + '<br><span style="font-size:11px; color:#7f8c8d;">' + potongPesan + '</span></td>',
+                    '<td style="text-align:center;"><b>' + n.readCount + '</b> Anggota</td>',
+                    '<td><span class="badge-status" style="background:' + stCol + ';">' + n.status + '</span></td>',
+                    '<td style="text-align:center;">',
+                    btnArsip,
+                    '<button style="background:#8e44ad; padding:6px; font-size:11px; margin-bottom:5px; width:auto; display:block;" onclick="editBroadcastKasir(' + i + ')"><i class="bi bi-pencil"></i> Edit</button>',
+                    '<button style="background:#e74c3c; padding:6px; font-size:11px; width:auto; display:block;" onclick="hapusBroadcastKasir(' + i + ', \'hapus\')"><i class="bi bi-trash"></i> Hapus</button>',
+                    '</td>',
+                    '</tr>'
+                ].join('');
+            });
+        }
+
+        function editBroadcastKasir(idx) {
+            var n = kasirBroadcastData[idx];
+            if (!n) return;
+            kasirBroadcastEditIdx = n.rowIdx;
+            safeSetValue('kbr-judul', n.judul);
+            safeSetValue('kbr-pesan', n.pesan);
+            document.getElementById('kbr-lampiran').value = '';
+            var ft = document.getElementById('kbr-form-title'); if (ft) ft.innerHTML = '<i class="bi bi-pencil-square" style="color:#8e44ad;"></i> Edit Broadcast: ' + n.judul;
+            safeSetText('kbr-btn-label', 'UPDATE BROADCAST');
+            document.getElementById('kbr-btn-cancel-edit').style.display = 'inline-block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function batalEditBroadcastKasir() {
+            resetBroadcastKasir();
+            Swal.fire('Info', 'Mode edit dibatalkan.', 'info');
+        }
+
+        function hapusBroadcastKasir(idx, aksi) {
+            var n = kasirBroadcastData[idx];
+            if (!n) return;
+            var txt = aksi === 'hapus' ? 'Hapus permanen broadcast ini beserta lampirannya (jika ada)? Anggota tidak akan melihatnya lagi.' : 'Arsipkan broadcast agar tidak tampil lagi di anggota?';
+            Swal.fire({ title: 'Konfirmasi', text: txt, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then(function (res) {
+                if (!res.isConfirmed) return;
+                if (aksi === 'hapus') {
+                    showLoading("Menghapus...");
+                    google.script.run.withSuccessHandler(function (r) {
+                        hideLoading();
+                        if (r.status === 'sukses') { Swal.fire('Sukses', r.msg, 'success'); if (kasirBroadcastEditIdx === n.rowIdx) resetBroadcastKasir(); loadKasirBroadcast(); pullUserNotifikasi(); }
+                        else { Swal.fire('Error', r.msg, 'error'); }
+                    }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).hapusNotifKasir(n.rowIdx, userToko.user);
+                } else {
+                    showLoading("Mengarsipkan...");
+                    google.script.run.withSuccessHandler(function (r) {
+                        hideLoading();
+                        if (r.status === 'sukses') { Swal.fire('Sukses', r.msg, 'success'); loadKasirBroadcast(); pullUserNotifikasi(); }
+                        else { Swal.fire('Error', r.msg, 'error'); }
+                    }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).hapusAtauArsipNotif(n.rowIdx, 'arsip');
                 }
             });
         }
