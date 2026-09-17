@@ -8460,13 +8460,17 @@
             var current = sel.value;
             var map = {};
             var names = [];
+            function addOptionKreditToko(nm, key) {
+                if (nm === '' || nm === '-') return;
+                if (!map[nm]) { map[nm] = key; names.push(nm); }
+            }
+            // Opsi toko utama selalu tampil (Toko Sutomo, Toko INKA, Bengkel Sutomo)
+            addOptionKreditToko('Toko Sutomo', 'SUTOMO');
+            addOptionKreditToko('Toko INKA', 'INKA');
+            addOptionKreditToko('Bengkel Sutomo', 'BENGKEL');
             (rawDataHutangAdmin || []).forEach(function (h) {
                 var nm = String(h.toko || '').replace(/^'+/, '').trim();
-                if (nm === '' || nm === '-') return;
-                if (!map[nm]) {
-                    map[nm] = h.store;
-                    names.push(nm);
-                }
+                addOptionKreditToko(nm, h.store || _storeFromNotaClient(h.nota, h.toko));
             });
             nameTokoStoreMap = map;
             names.sort(function (a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
@@ -8781,9 +8785,19 @@
                 var ed = document.getElementById('filter-kredit-toko-end').value;
                 var notifFilter = document.getElementById('filter-kredit-toko-notif').value;
                 var tokoFilter = (document.getElementById('filter-kredit-toko-store') || { value: 'ALL' }).value;
+                var mappedStoreKey = tokoFilter === 'ALL' ? 'ALL' : (nameTokoStoreMap[tokoFilter] || '');
+                var isCanonTokoOption = (tokoFilter === 'Toko Sutomo' || tokoFilter === 'Toko INKA' || tokoFilter === 'Bengkel Sutomo');
 
                 filteredHutangAdmin = rawDataHutangAdmin.filter(function (h) {
-                    if (tokoFilter !== 'ALL' && String(h.toko || '').replace(/^'+/, '').trim() !== tokoFilter) return false;
+                    if (tokoFilter !== 'ALL') {
+                        var nameMatch = String(h.toko || '').replace(/^'+/, '').trim() === tokoFilter;
+                        if (isCanonTokoOption) {
+                            var hKey = h.store || _storeFromNotaClient(h.nota, h.toko);
+                            if (!nameMatch && mappedStoreKey !== hKey) return false;
+                        } else if (!nameMatch) {
+                            return false;
+                        }
+                    }
                     var matchText = (h.nama + " " + h.noAnggota).toLowerCase().indexOf(q) !== -1;
                     if (!matchText) return false;
                     var wp = (h.waktu || '').split(' ')[0].split('/');
