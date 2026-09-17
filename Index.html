@@ -2936,6 +2936,11 @@
                     <div class="angka" id="stat-kredit-toko-trans-inka">Rp 0</div>
                     <div style="font-size:11px; opacity:.8; margin-top:3px;">Jasa Toko INKA: <b id="stat-kredit-toko-jasa-inka">Rp 0</b></div>
                 </div>
+                <div class="admin-card" style="border-top:4px solid #f39c12;">
+                    <h4>Transaksi Bengkel Sutomo</h4>
+                    <div class="angka" id="stat-kredit-toko-trans-bengkel">Rp 0</div>
+                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Jasa Bengkel Sutomo: <b id="stat-kredit-toko-jasa-bengkel">Rp 0</b></div>
+                </div>
             </div>
 
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
@@ -3048,6 +3053,14 @@
                     <h4>Jasa Toko INKA (1,5%)</h4>
                     <div class="angka" id="stat-rekap-anggota-jasa-inka">Rp 0</div>
                 </div>
+                <div class="admin-card" style="border-top:4px solid #f39c12;">
+                    <h4>Transaksi Bengkel Sutomo</h4>
+                    <div class="angka" id="stat-rekap-anggota-trans-bengkel">Rp 0</div>
+                </div>
+                <div class="admin-card" style="border-top:4px solid #ca8a04;">
+                    <h4>Jasa Bengkel Sutomo (1,5%)</h4>
+                    <div class="angka" id="stat-rekap-anggota-jasa-bengkel">Rp 0</div>
+                </div>
                 <div class="admin-card ac-red">
                     <h4>Total</h4>
                     <div class="angka" id="stat-rekap-anggota-total">Rp 0</div>
@@ -3077,6 +3090,8 @@
                             <th class="text-right">Jasa Toko Sutomo (1,5%)</th>
                             <th class="text-right">Transaksi Toko INKA</th>
                             <th class="text-right">Jasa Toko INKA (1,5%)</th>
+                            <th class="text-right">Transaksi Bengkel Sutomo</th>
+                            <th class="text-right">Jasa Bengkel Sutomo (1,5%)</th>
                             <th class="text-right">Total</th>
                             <th style="text-align:center;">Status</th>
                             <th style="text-align:center;">Aksi</th>
@@ -3084,7 +3099,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="11" style="text-align:center;">Pilih bulan & tahun, lalu klik Refresh</td>
+                            <td colspan="13" style="text-align:center;">Pilih bulan & tahun, lalu klik Refresh</td>
                         </tr>
                     </tbody>
                 </table>
@@ -3638,6 +3653,13 @@
                     <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.85;">Toko INKA</div>
                     <div id="kt-toko-inka" style="font-size:22px; font-weight:800; margin-top:8px;">Rp 0</div>
                     <div style="font-size:11px; opacity:.75; margin-top:4px;">Toko INKA Depan / Belakang / Banyuwangi</div>
+                </div>
+                <div
+                    style="background:linear-gradient(135deg,#92400e,#f59e0b); border-radius:14px; padding:18px 20px; color:#fff; box-shadow:0 6px 18px rgba(245,158,11,.28); position:relative; overflow:hidden;">
+                    <i class="bi bi-wrench-adjustable-circle-fill" style="position:absolute; right:12px; top:12px; font-size:28px; opacity:.22;"></i>
+                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.85;">Bengkel Sutomo</div>
+                    <div id="kt-toko-bengkel" style="font-size:22px; font-weight:800; margin-top:8px;">Rp 0</div>
+                    <div style="font-size:11px; opacity:.75; margin-top:4px;">Kopinka Bengkel Sutomo (JSPWS)</div>
                 </div>
                 <div
                     style="background:linear-gradient(135deg,#7f1d1d,#ef4444); border-radius:14px; padding:18px 20px; color:#fff; box-shadow:0 6px 18px rgba(239,68,68,.28); position:relative; overflow:hidden;">
@@ -4802,6 +4824,8 @@
             safeSetText('stat-kredit-toko-jasa-sutomo', '...');
             safeSetText('stat-kredit-toko-trans-inka', '...');
             safeSetText('stat-kredit-toko-jasa-inka', '...');
+            safeSetText('stat-kredit-toko-trans-bengkel', '...');
+            safeSetText('stat-kredit-toko-jasa-bengkel', '...');
         }
 
         var rawMultiData = [];
@@ -6473,9 +6497,10 @@
         }
 
         function renderKreditTokoSummary() {
-            var s = myKreditTokoSummary || { global: 0, outstanding: 0, effective: 0, terpakai: 0, biayaJasa: 0, transSutomo: 0, jasaSutomo: 0, transInka: 0, jasaInka: 0, totalToko: 0 };
+            var s = myKreditTokoSummary || { global: 0, outstanding: 0, effective: 0, terpakai: 0, biayaJasa: 0, transSutomo: 0, jasaSutomo: 0, transInka: 0, jasaInka: 0, transBengkel: 0, jasaBengkel: 0, totalToko: 0 };
             safeSetText('kt-toko-sutomo', 'Rp ' + ((Number(s.transSutomo) || 0) + (Number(s.jasaSutomo) || 0)).toLocaleString('id-ID'));
             safeSetText('kt-toko-inka', 'Rp ' + ((Number(s.transInka) || 0) + (Number(s.jasaInka) || 0)).toLocaleString('id-ID'));
+            safeSetText('kt-toko-bengkel', 'Rp ' + ((Number(s.transBengkel) || 0) + (Number(s.jasaBengkel) || 0)).toLocaleString('id-ID'));
             safeSetText('kt-toko-total', 'Rp ' + (Number(s.totalToko) || 0).toLocaleString('id-ID'));
             var noticeEl = document.getElementById('kt-notice');
             if (noticeEl) {
@@ -6499,7 +6524,7 @@
                 var mT = (String(h.id) + " " + String(h.nota) + " " + String(h.kodeVoucher)).toLowerCase().indexOf(q) !== -1;
                 return mD && mT;
             });
-            var stSutomo = 0, stInka = 0;
+            var stSutomo = 0, stInka = 0, stBengkel = 0;
             myKreditTokoData.forEach(function (h) {
                 var mD = true;
                 if (h.waktu && h.waktu.includes('/')) {
@@ -6509,16 +6534,20 @@
                 } else if (bln !== 'ALL' || thn !== '') mD = false;
                 if (!mD) return;
                 var nilaiT = Number(h.nilai) || 0;
-                if (_storeFromNotaClient(h.nota) === 'SUTOMO') stSutomo += nilaiT;
+                var stk = _storeFromNotaClient(h.nota, h.toko);
+                if (stk === 'SUTOMO') stSutomo += nilaiT;
+                else if (stk === 'BENGKEL') stBengkel += nilaiT;
                 else stInka += nilaiT;
             });
             if (myKreditTokoSummary) {
-                var jsS = Math.round(stSutomo * 0.015), jsI = Math.round(stInka * 0.015);
+                var jsS = Math.round(stSutomo * 0.015), jsI = Math.round(stInka * 0.015), jsB = Math.round(stBengkel * 0.015);
                 myKreditTokoSummary.transSutomo = stSutomo;
                 myKreditTokoSummary.jasaSutomo = jsS;
                 myKreditTokoSummary.transInka = stInka;
                 myKreditTokoSummary.jasaInka = jsI;
-                myKreditTokoSummary.totalToko = stSutomo + jsS + stInka + jsI;
+                myKreditTokoSummary.transBengkel = stBengkel;
+                myKreditTokoSummary.jasaBengkel = jsB;
+                myKreditTokoSummary.totalToko = stSutomo + jsS + stInka + jsI + stBengkel + jsB;
             }
             myKreditTokoPage = 1;
             renderMyKreditToko();
@@ -8415,6 +8444,8 @@
             safeSetText('stat-kredit-toko-jasa-sutomo', '...');
             safeSetText('stat-kredit-toko-trans-inka', '...');
             safeSetText('stat-kredit-toko-jasa-inka', '...');
+            safeSetText('stat-kredit-toko-trans-bengkel', '...');
+            safeSetText('stat-kredit-toko-jasa-bengkel', '...');
             loadRekapHutangAdmin(true);
         }
 
@@ -8495,7 +8526,7 @@
                         rawDataHutangAdmin.forEach(function (h) {
                             h.memberLimit = Number(h.memberLimit) || 0; // Ensure it's a number
                             h.remainingLimit = h.memberLimit - (Number(h.nilai) || 0);
-                            h.store = h.store || _storeFromNotaClient(h.nota);
+                            h.store = h.store || _storeFromNotaClient(h.nota, h.toko);
                         });
                         rawDataHutangAdmin.sort(function (a, b) { return (b.waktuRaw || 0) - (a.waktuRaw || 0); });
                         rawHutangPeriodKey = currentPeriodKeyKreditToko();
@@ -8774,18 +8805,22 @@
                 });
 
                 var total = filteredHutangAdmin.reduce(function (sum, h) { return sum + (Number(h.sisa) || 0); }, 0);
-                var totTransSutomo = 0, totTransInka = 0;
+                var totTransSutomo = 0, totTransInka = 0, totTransBengkel = 0;
                 filteredHutangAdmin.forEach(function (h) {
                     if (h.store === 'SUTOMO') totTransSutomo += Number(h.nilai) || 0;
+                    else if (h.store === 'BENGKEL') totTransBengkel += Number(h.nilai) || 0;
                     else totTransInka += Number(h.nilai) || 0;
                 });
                 var jasaSutomo = Math.round(totTransSutomo * 0.015);
                 var jasaInka = Math.round(totTransInka * 0.015);
-                safeSetText('stat-kredit-toko-total', 'Rp ' + (total + jasaSutomo + jasaInka).toLocaleString('id-ID'));
+                var jasaBengkel = Math.round(totTransBengkel * 0.015);
+                safeSetText('stat-kredit-toko-total', 'Rp ' + (total + jasaSutomo + jasaInka + jasaBengkel).toLocaleString('id-ID'));
                 safeSetText('stat-kredit-toko-trans-sutomo', 'Rp ' + totTransSutomo.toLocaleString('id-ID'));
                 safeSetText('stat-kredit-toko-jasa-sutomo', 'Rp ' + jasaSutomo.toLocaleString('id-ID'));
                 safeSetText('stat-kredit-toko-trans-inka', 'Rp ' + totTransInka.toLocaleString('id-ID'));
                 safeSetText('stat-kredit-toko-jasa-inka', 'Rp ' + jasaInka.toLocaleString('id-ID'));
+                safeSetText('stat-kredit-toko-trans-bengkel', 'Rp ' + totTransBengkel.toLocaleString('id-ID'));
+                safeSetText('stat-kredit-toko-jasa-bengkel', 'Rp ' + jasaBengkel.toLocaleString('id-ID'));
                 kreditTokoAdminPage = 1; renderTableKreditTokoAdmin();
                 updateKreditTokoChart();
             }, 120);
@@ -8810,8 +8845,12 @@
             }, 100);
         }
 
-        function _storeFromNotaClient(nota) {
-            return String(nota || '').replace(/^'/, '').trim().toUpperCase().indexOf('TKST') === 0 ? 'SUTOMO' : 'INKA';
+        function _storeFromNotaClient(nota, toko) {
+            var n = String(nota || '').replace(/^'/, '').trim().toUpperCase();
+            var t = String(toko || '').replace(/^'/, '').trim().toUpperCase();
+            if (n.indexOf('TKST') === 0) return 'SUTOMO';
+            if (n.indexOf('JSPWS') === 0 || t.indexOf('KOPINKA BENGKEL SUTOMO') !== -1) return 'BENGKEL';
+            return 'INKA';
         }
 
         function renderTableKreditTokoAdmin() {
@@ -8996,16 +9035,18 @@
             if (filteredHutangAdmin.length === 0) return Swal.fire('Info', 'Data kosong.', 'info');
             var d = [["Waktu", "No Anggota", "Nama", "Nota", "Kode Transaksi", "Nominal", "Status"]];
             filteredHutangAdmin.forEach(function (h) { d.push([h.waktu, h.noAnggota, h.nama, h.nota || '-', h.kodeVoucher || h.id, Number(h.nilai) || 0, h.status]); });
-            var totNominal = 0, totBayar = 0, totSisa = 0, totTransSutomo = 0, totTransInka = 0;
+            var totNominal = 0, totBayar = 0, totSisa = 0, totTransSutomo = 0, totTransInka = 0, totTransBengkel = 0;
             filteredHutangAdmin.forEach(function (h) {
                 totNominal += Number(h.nilai) || 0;
                 totBayar += Number(h.dibayar) || 0;
                 totSisa += Number(h.sisa) || 0;
                 if (h.store === 'SUTOMO') totTransSutomo += Number(h.nilai) || 0;
+                else if (h.store === 'BENGKEL') totTransBengkel += Number(h.nilai) || 0;
                 else totTransInka += Number(h.nilai) || 0;
             });
             var jasaSutomo = Math.round(totTransSutomo * 0.015);
             var jasaInka = Math.round(totTransInka * 0.015);
+            var jasaBengkel = Math.round(totTransBengkel * 0.015);
             d.push([]);
             d.push(['', 'TOTAL', '', '', '', totNominal]);
             d.push([]);
@@ -9013,8 +9054,10 @@
             d.push(['Jasa Toko Sutomo (1,5%)', '', '', '', '', jasaSutomo, '']);
             d.push(['Transaksi Toko INKA', '', '', '', '', totTransInka, '']);
             d.push(['Jasa Toko INKA (1,5%)', '', '', '', '', jasaInka, '']);
+            d.push(['Transaksi Bengkel Sutomo', '', '', '', '', totTransBengkel, '']);
+            d.push(['Jasa Bengkel Sutomo (1,5%)', '', '', '', '', jasaBengkel, '']);
             d.push([]);
-            d.push(['Catatan: Total tagihan tertunda = ' + (totSisa + jasaSutomo + jasaInka).toLocaleString('id-ID') + ' (termasuk biaya jasa 1,5% sebesar ' + (jasaSutomo + jasaInka).toLocaleString('id-ID') + ').']);
+            d.push(['Catatan: Total tagihan tertunda = ' + (totSisa + jasaSutomo + jasaInka + jasaBengkel).toLocaleString('id-ID') + ' (termasuk biaya jasa 1,5% sebesar ' + (jasaSutomo + jasaInka + jasaBengkel).toLocaleString('id-ID') + ').']);
             var ws = XLSX.utils.aoa_to_sheet(d); var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekap_Kredit"); XLSX.writeFile(wb, "Rekap_Kredit_Toko.xlsx");
         }
 
@@ -9077,6 +9120,8 @@ var skel = '';
             safeSetText('stat-rekap-anggota-jasa-sutomo', '...');
             safeSetText('stat-rekap-anggota-trans-inka', '...');
             safeSetText('stat-rekap-anggota-jasa-inka', '...');
+            safeSetText('stat-rekap-anggota-trans-bengkel', '...');
+            safeSetText('stat-rekap-anggota-jasa-bengkel', '...');
             safeSetText('stat-rekap-anggota-total', '...');
 
             google.script.run.withSuccessHandler(function (res) {
@@ -9105,6 +9150,7 @@ var skel = '';
             filteredRekapAnggota = rawRekapAnggota.filter(function (a) {
                 if (mappedKey === 'SUTOMO' && (Number(a.transSutomo) || 0) <= 0) return false;
                 if (mappedKey === 'INKA' && (Number(a.transInka) || 0) <= 0) return false;
+                if (mappedKey === 'BENGKEL' && (Number(a.transBengkel) || 0) <= 0) return false;
                 if (!q) return true;
                 return (a.noAnggota && a.noAnggota.toLowerCase().indexOf(q) !== -1) ||
                        (a.nama && a.nama.toLowerCase().indexOf(q) !== -1) ||
@@ -9112,12 +9158,14 @@ var skel = '';
             });
 
             // Update stats
-            var totTransSutomo = 0, totJasaSutomo = 0, totTransInka = 0, totJasaInka = 0, totTotal = 0;
+            var totTransSutomo = 0, totJasaSutomo = 0, totTransInka = 0, totJasaInka = 0, totTransBengkel = 0, totJasaBengkel = 0, totTotal = 0;
             filteredRekapAnggota.forEach(function (a) {
                 totTransSutomo += Number(a.transSutomo) || 0;
                 totJasaSutomo += Number(a.jasaSutomo) || 0;
                 totTransInka += Number(a.transInka) || 0;
                 totJasaInka += Number(a.jasaInka) || 0;
+                totTransBengkel += Number(a.transBengkel) || 0;
+                totJasaBengkel += Number(a.jasaBengkel) || 0;
                 totTotal += Number(a.total) || 0;
             });
             safeSetText('stat-rekap-anggota-jml', filteredRekapAnggota.length);
@@ -9125,6 +9173,8 @@ var skel = '';
             safeSetText('stat-rekap-anggota-jasa-sutomo', 'Rp ' + totJasaSutomo.toLocaleString('id-ID'));
             safeSetText('stat-rekap-anggota-trans-inka', 'Rp ' + totTransInka.toLocaleString('id-ID'));
             safeSetText('stat-rekap-anggota-jasa-inka', 'Rp ' + totJasaInka.toLocaleString('id-ID'));
+            safeSetText('stat-rekap-anggota-trans-bengkel', 'Rp ' + totTransBengkel.toLocaleString('id-ID'));
+            safeSetText('stat-rekap-anggota-jasa-bengkel', 'Rp ' + totJasaBengkel.toLocaleString('id-ID'));
             safeSetText('stat-rekap-anggota-total', 'Rp ' + totTotal.toLocaleString('id-ID'));
 
             rekapAnggotaPage = 1;
@@ -9143,7 +9193,7 @@ var skel = '';
             var slice = filteredRekapAnggota.slice(start, start + rekapAnggotaLimit);
 
             if (slice.length === 0) {
-                tb.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px; color:#95a5a6;">Tidak ada data rekap anggota untuk periode ini.</td></tr>';
+                tb.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:20px; color:#95a5a6;">Tidak ada data rekap anggota untuk periode ini.</td></tr>';
             } else {
                 var html = '';
                 slice.forEach(function (a, idx) {
@@ -9161,6 +9211,8 @@ var skel = '';
                         '<td class="text-right" style="color:#c0392b;"><b>Rp ' + (Number(a.jasaSutomo) || 0).toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right"><b>Rp ' + (Number(a.transInka) || 0).toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right" style="color:#c0392b;"><b>Rp ' + (Number(a.jasaInka) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right"><b>Rp ' + (Number(a.transBengkel) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right" style="color:#b45309;"><b>Rp ' + (Number(a.jasaBengkel) || 0).toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right"><span style="display:inline-block; min-width:65px; color:#2c3e50; font-weight:800;">Rp ' + (Number(a.total) || 0).toLocaleString('id-ID') + '</span></td>' +
                         '<td class="text-center"><span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:700; color:' + stsColor + '; background:' + stsBg + ';">' + (a.status || '-') + '</span></td>' +
                         ((Number(a.total) || 0) > 0
@@ -9205,7 +9257,7 @@ var skel = '';
             d.push(['REKAP KREDIT TOKO PER ANGGOTA']);
             d.push([judulPeriode]);
             d.push([]);
-            d.push(["No", "No Anggota", "Nama", "Kelompok", "Transaksi Toko Sutomo", "Jasa Toko Sutomo (1,5%)", "Transaksi Toko INKA", "Jasa Toko INKA (1,5%)", "Total", "Status"]);
+            d.push(["No", "No Anggota", "Nama", "Kelompok", "Transaksi Toko Sutomo", "Jasa Toko Sutomo (1,5%)", "Transaksi Toko INKA", "Jasa Toko INKA (1,5%)", "Transaksi Bengkel Sutomo", "Jasa Bengkel Sutomo (1,5%)", "Total", "Status"]);
 
             filteredRekapAnggota.forEach(function (a, idx) {
                 d.push([
@@ -9217,27 +9269,31 @@ var skel = '';
                     Number(a.jasaSutomo) || 0,
                     Number(a.transInka) || 0,
                     Number(a.jasaInka) || 0,
+                    Number(a.transBengkel) || 0,
+                    Number(a.jasaBengkel) || 0,
                     Number(a.total) || 0,
                     a.status || '-'
                 ]);
             });
 
             d.push([]);
-            var tJasaSutomo = 0, tJasaInka = 0, tTransSutomo = 0, tTransInka = 0;
+            var tJasaSutomo = 0, tJasaInka = 0, tTransSutomo = 0, tTransInka = 0, tTransBengkel = 0, tJasaBengkel = 0;
             filteredRekapAnggota.forEach(function (a) {
                 tTransSutomo += Number(a.transSutomo) || 0;
                 tJasaSutomo += Number(a.jasaSutomo) || 0;
                 tTransInka += Number(a.transInka) || 0;
                 tJasaInka += Number(a.jasaInka) || 0;
+                tTransBengkel += Number(a.transBengkel) || 0;
+                tJasaBengkel += Number(a.jasaBengkel) || 0;
             });
-            d.push(['', '', 'TOTAL', '', tTransSutomo, tJasaSutomo, tTransInka, tJasaInka, tTransSutomo + tJasaSutomo + tTransInka + tJasaInka, '']);
+            d.push(['', '', 'TOTAL', '', tTransSutomo, tJasaSutomo, tTransInka, tJasaInka, tTransBengkel, tJasaBengkel, tTransSutomo + tJasaSutomo + tTransInka + tJasaInka + tTransBengkel + tJasaBengkel, '']);
 
             var ws = XLSX.utils.aoa_to_sheet(d);
 
             // Set column widths
             ws['!cols'] = [
                 { wch: 5 }, { wch: 14 }, { wch: 22 }, { wch: 14 },
-                { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 16 }, { wch: 16 }
+                { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 16 }, { wch: 16 }
             ];
 
             var wb = XLSX.utils.book_new();

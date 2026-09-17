@@ -2496,13 +2496,15 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q, tokoFilter) {
         if (hayQ.indexOf(fQ) === -1) continue;
       }
 
-      var stNota = _storeFromNota(String(row[2]));
+      var stNota = _storeFromNota(String(row[2]), String(row[3]));
 
       if (fToko !== '') {
         var keyT = (stNota.key || '').toLowerCase();
         var namaT = (stNota.nama || '').toLowerCase();
         var tokoCol = String(row[3] || '').trim().toLowerCase();
-        if (keyT !== fToko && namaT !== fToko && tokoCol !== fToko) continue;
+        var notaUp = String(row[2] || '').replace(/^'/, '').trim().toUpperCase();
+        var fTokoUp = String(fToko).toUpperCase();
+        if (keyT !== fToko && namaT !== fToko && tokoCol !== fToko && notaUp.indexOf(fTokoUp) !== 0) continue;
       }
 
       result.push({
@@ -2554,10 +2556,13 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q, tokoFilter) {
 // =====================================================
 function _getBiayaJasaRate() { return 0.015; }
 
-// Toko asal nota berdasarkan awalan kode nota: prefix TKST = Toko Sutomo, selainnya = Toko INKA.
-function _storeFromNota(notaRaw) {
+// Toko asal nota berdasarkan awalan kode nota / nama toko:
+// prefix TKST = Toko Sutomo, prefix JSPWS atau nama toko "Kopinka Bengkel Sutomo" = Bengkel Sutomo, selainnya = Toko INKA.
+function _storeFromNota(notaRaw, tokoRaw) {
   var n = String(notaRaw || '').replace(/^'/, '').trim().toUpperCase();
+  var t = String(tokoRaw || '').replace(/^'/, '').trim().toUpperCase();
   if (n.indexOf('TKST') === 0) return { key: 'SUTOMO', nama: 'Toko Sutomo' };
+  if (n.indexOf('JSPWS') === 0 || t.indexOf('KOPINKA BENGKEL SUTOMO') !== -1) return { key: 'BENGKEL', nama: 'Bengkel Sutomo' };
   return { key: 'INKA', nama: 'Toko INKA' };
 }
 
@@ -2679,7 +2684,7 @@ function getRekapKreditPerAnggota(bulan, tahun) {
       var tglObj = _parseDate(row[0]);
       if (!tglObj) continue;
       if (!rowsByMember[noAnggota]) rowsByMember[noAnggota] = [];
-      rowsByMember[noAnggota].push({ tgl: tglObj, tglTime: tglObj.getTime(), nilai: Number(row[5]) || 0, nota: String(row[2] || '') });
+      rowsByMember[noAnggota].push({ tgl: tglObj, tglTime: tglObj.getTime(), nilai: Number(row[5]) || 0, nota: String(row[2] || ''), toko: String(row[3] || '') });
     }
 
     // Gabungan seluruh anggota (userMap) + anggota yang ada piutang tapi tidak
@@ -2717,7 +2722,7 @@ function getRekapKreditPerAnggota(bulan, tahun) {
 
         var used = Math.min(r.nilai, allocRemain);
         allocRemain -= used;
-        var stKey = _storeFromNota(r.nota).key;
+        var stKey = _storeFromNota(r.nota, r.toko).key;
 
         // Hanya masukkan ke rekap bila baris ada di periode yang dipilih
         var inPeriod = true;
@@ -2740,10 +2745,12 @@ function getRekapKreditPerAnggota(bulan, tahun) {
 
       var transSutomo = transByStore['SUTOMO'] || 0;
       var transInka = transByStore['INKA'] || 0;
+      var transBengkel = transByStore['BENGKEL'] || 0;
       // Biaya jasa per toko = 1,5% dari nilai transaksi toko tersebut
       var rateJasa = _getBiayaJasaRate();
       var jasaSutomo = Math.round(transSutomo * rateJasa);
       var jasaInka = Math.round(transInka * rateJasa);
+      var jasaBengkel = Math.round(transBengkel * rateJasa);
 
       var status;
       if (periodeTransaksi <= 0 && feeRes.balance <= 0) status = 'Tidak Ada Transaksi';
@@ -2760,13 +2767,15 @@ function getRekapKreditPerAnggota(bulan, tahun) {
         totalNilai: periodeTotal,
         totalDibayar: periodeDibayar,
         sisaPiutang: feeRes.principal,
-        biayaJasa: jasaSutomo + jasaInka,
+        biayaJasa: jasaSutomo + jasaInka + jasaBengkel,
         sisa: feeRes.balance,
         transSutomo: transSutomo,
         jasaSutomo: jasaSutomo,
         transInka: transInka,
         jasaInka: jasaInka,
-        total: transSutomo + jasaSutomo + transInka + jasaInka,
+        transBengkel: transBengkel,
+        jasaBengkel: jasaBengkel,
+        total: transSutomo + jasaSutomo + transInka + jasaInka + transBengkel + jasaBengkel,
         status: status
       };
     }
