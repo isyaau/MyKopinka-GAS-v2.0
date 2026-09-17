@@ -2859,12 +2859,6 @@
             <!-- FILTER PERIODE (shared) -->
             <div class="filter-container">
                 <div style="display:flex; gap:10px; flex-wrap:wrap; width:100%;">
-                    <div style="flex:1; min-width:150px;">
-                        <label>Filter Toko:</label>
-                        <select id="filter-kredit-toko-store" onchange="applyFilterTokoKreditToko()">
-                            <option value="ALL">Semua Toko</option>
-                        </select>
-                    </div>
                     <div style="flex:1; min-width:200px;">
                         <label>Bulan & Tahun:</label>
                         <div style="display:flex; gap:5px;">
@@ -2894,6 +2888,14 @@
                             <span>-</span>
                             <input type="date" id="filter-kredit-toko-end" onchange="changePeriodeKreditToko()">
                         </div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; width:100%; margin-top:10px;">
+                    <div style="flex:1; min-width:150px;">
+                        <label>Filter Toko:</label>
+                        <select id="filter-kredit-toko-store" onchange="applyFilterTokoKreditToko()">
+                            <option value="ALL">Semua Toko</option>
+                        </select>
                     </div>
                     <div style="flex:1; min-width:150px;" id="filter-kredit-toko-notif-wrap">
                         <label>Status Notifikasi:</label>
