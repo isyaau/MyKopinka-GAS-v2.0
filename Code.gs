@@ -70,6 +70,17 @@ function _parseDate(dateVal) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function _resolveWaktu(waktuInput, tz) {
+  if (waktuInput !== undefined && waktuInput !== null && String(waktuInput).trim() !== '') {
+    var s = String(waktuInput).trim();
+    var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (iso) return iso[3] + '/' + iso[2] + '/' + iso[1] + ' ' + (iso[4] || '00') + ':' + (iso[5] || '00') + ':' + (iso[6] || '00');
+    var dmy = s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:[ ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (dmy) return dmy[1] + '/' + dmy[2] + '/' + dmy[3] + ' ' + (dmy[4] || '00') + ':' + (dmy[5] || '00') + ':' + (dmy[6] || '00');
+  }
+  return Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm:ss");
+}
+
 function _formatTglIndo(tgl) {
   if (!tgl || tgl === "" || tgl === "-") return "-";
   if (Object.prototype.toString.call(tgl) === '[object Date]') return Utilities.formatDate(tgl, Session.getScriptTimeZone(), "dd/MM/yyyy");
@@ -1464,7 +1475,7 @@ function aktifkanVoucher(kode) {
   }
 }
 
-function prosesVoucher(kode, mode, userToko, notaToko) {
+function prosesVoucher(kode, mode, userToko, notaToko, waktuInput) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sVoucher = ss.getSheetByName(SHEET_VOUCHERS);
@@ -1528,7 +1539,7 @@ function prosesVoucher(kode, mode, userToko, notaToko) {
       if (st === 'Used') return { status: 'sudah_pakai_struk' }; 
       if (st !== 'Active' || isExp || isEarly) return { status: 'error', msg: '❌ Voucher tidak dapat digunakan (Belum Masuk Masa Aktif / Kadaluarsa).' };
       
-      var timestamp = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm:ss");
+      var timestamp = _resolveWaktu(waktuInput, tz);
       var idSys = "TRX-" + new Date().getTime().toString().slice(-6);
       sVoucher.getRange(vRow, 7).setValue('Used'); 
       sLaporan.appendRow([timestamp, idSys, "'" + notaToko, "'" + info.kode, userToko.nama, "'" + userToko.user, vData[5], info.nama, "'" + info.noAnggota, info.kelompok]);
@@ -1624,7 +1635,7 @@ function getPemakaianBulananMember(noAnggota) {
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
-function redeemMassal(arrKode, userToko, notaToko) {
+function redeemMassal(arrKode, userToko, notaToko, waktuInput) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sVoucher = ss.getSheetByName(SHEET_VOUCHERS);
@@ -1634,7 +1645,7 @@ function redeemMassal(arrKode, userToko, notaToko) {
     today.setHours(0,0,0,0);
     
     var realtime = new Date(); 
-    var timestamp = Utilities.formatDate(realtime, tz, "dd/MM/yyyy HH:mm:ss");
+    var timestamp = _resolveWaktu(waktuInput, tz);
     var idSys = "TRX-" + realtime.getTime().toString().slice(-6);
     var tNilai = 0; var kodes = []; var vName = "-"; var vAngg = "-"; var vKel = "-";
     
@@ -1666,7 +1677,7 @@ function redeemMassal(arrKode, userToko, notaToko) {
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
-function redeemMassalPiutang(arrKode, userToko, notaToko, base64Photo, fileName, massNominal) {
+function redeemMassalPiutang(arrKode, userToko, notaToko, base64Photo, fileName, massNominal, waktuInput) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sVoucher = ss.getSheetByName(SHEET_VOUCHERS);
@@ -1678,7 +1689,7 @@ function redeemMassalPiutang(arrKode, userToko, notaToko, base64Photo, fileName,
     today.setHours(0,0,0,0);
     
     var realtime = new Date(); 
-    var timestamp = Utilities.formatDate(realtime, tz, "dd/MM/yyyy HH:mm:ss");
+    var timestamp = _resolveWaktu(waktuInput, tz);
     var idSys = "TRX-" + (realtime.getTime() + 1000).toString().slice(-8); // ID Transaksi Voucher
     var idPi = 'PIU-' + (realtime.getTime() + 2000).toString().slice(-8); // ID Transaksi Piutang
     var tNilai = 0; 
@@ -1755,7 +1766,7 @@ function redeemMassalPiutang(arrKode, userToko, notaToko, base64Photo, fileName,
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
-function catatPiutangVoucher(kode, userToko, notaToko, base64Photo, fileName, nominalOverride) {
+function catatPiutangVoucher(kode, userToko, notaToko, base64Photo, fileName, nominalOverride, waktuInput) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sVoucher = ss.getSheetByName(SHEET_VOUCHERS);
@@ -1768,7 +1779,7 @@ function catatPiutangVoucher(kode, userToko, notaToko, base64Photo, fileName, no
 
     var sPi = _ensureKreditTokoSheet();
     var tz = Session.getScriptTimeZone();
-    var timestamp = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm:ss");
+    var timestamp = _resolveWaktu(waktuInput, tz);
     var idPi = 'PIU-' + new Date().getTime().toString().slice(-8);
     var idSys = 'TRX-' + (new Date().getTime() + 500).toString().slice(-8);
     var valNum = Number(nominalOverride !== undefined && nominalOverride !== null ? nominalOverride : dVoucher[vRow-1][5]) || 0;
@@ -1795,14 +1806,14 @@ function catatPiutangVoucher(kode, userToko, notaToko, base64Photo, fileName, no
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
-function catatPiutangMassal(arrKode, userToko, notaToko, base64Photo, fileName, massNominal) {
+function catatPiutangMassal(arrKode, userToko, notaToko, base64Photo, fileName, massNominal, waktuInput) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sVoucher = ss.getSheetByName(SHEET_VOUCHERS);
     var dVoucher = sVoucher.getDataRange().getValues();
     var sPi = _ensureKreditTokoSheet();
     var tz = Session.getScriptTimeZone();
-    var timestamp = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm:ss");
+    var timestamp = _resolveWaktu(waktuInput, tz);
     var idSys = 'TRX-' + (new Date().getTime() + 500).toString().slice(-8);
     var idPi = 'PIU-' + new Date().getTime().toString().slice(-8);
     var fileId = '';
@@ -2217,7 +2228,7 @@ function saveKreditTokoFileToDrive(base64Data, fileName) {
   } catch(e) { throw new Error("Gagal simpan lampiran kredit toko ke Drive: " + e.message); }
 }
 
-function addPiutangManual(noAnggota, notaToko, nilai, userToko, base64Photo, fileName) {
+function addPiutangManual(noAnggota, notaToko, nilai, userToko, base64Photo, fileName, waktuInput) {
   try {
     if (!noAnggota) return { status: 'error', msg: 'Nomor anggota kosong.' };
     noAnggota = _toNoAnggota(noAnggota);
@@ -2244,7 +2255,7 @@ function addPiutangManual(noAnggota, notaToko, nilai, userToko, base64Photo, fil
     
     var sPi = _ensureKreditTokoSheet();
     var tz = Session.getScriptTimeZone();
-    var waktu = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm:ss");
+    var waktu = _resolveWaktu(waktuInput, tz);
     var idSys = 'PIU-' + new Date().getTime().toString().slice(-8);
     var valNum = Number(String(nilai).replace(/[^0-9\-\\.]/g,'')) || 0;
 
@@ -2360,7 +2371,7 @@ function getKreditTokoForMember(noAnggota) {
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
-function prosesVoucherPiutang(kode, userToko, notaToko, base64Photo, fileName, nominalOverride) {
+function prosesVoucherPiutang(kode, userToko, notaToko, base64Photo, fileName, nominalOverride, waktuInput) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sVoucher = ss.getSheetByName(SHEET_VOUCHERS);
@@ -2392,7 +2403,7 @@ function prosesVoucherPiutang(kode, userToko, notaToko, base64Photo, fileName, n
     if (st === 'Used') return { status: 'sudah_pakai_struk' };
     if (st !== 'Active' || isExp || isEarly) return { status: 'error', msg: '❌ Voucher tidak dapat digunakan (Belum Aktif / Kadaluarsa).' };
 
-    var timestamp = Utilities.formatDate(new Date(), tz, "dd/MM/yyyy HH:mm:ss");
+    var timestamp = _resolveWaktu(waktuInput, tz);
     var idSys = "TRX-" + new Date().getTime().toString().slice(-6);
     // tandai voucher terpakai
     sVoucher.getRange(vRow, 7).setValue('Used');
