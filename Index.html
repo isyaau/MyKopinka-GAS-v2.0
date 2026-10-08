@@ -2292,22 +2292,25 @@
                         </div>
                         <div id="piutang-member-info" style="display:none; margin-top:12px;"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Nomor Nota Penjualan</label>
-                        <div class="nota-input-wrapper">
-                            <div class="nota-prefix" id="prefix-nota-piutang">TKBW------</div>
-                            <input type="text" id="piutang-tab-nota" placeholder="Contoh: 012" autocomplete="off"
-                                maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    <div class="form-group" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                        <div class="form-group" style="flex:1; min-width:175px; margin:0;">
+                            <label>Waktu Catat (Tanggal &amp; Jam)</label>
+                            <input type="datetime-local" id="piutang-tab-waktu"
+                                oninput="syncNotaPrefix('piutang-tab-waktu', 'prefix-nota-piutang')">
+                        </div>
+                        <div class="form-group" style="flex:1; min-width:175px; margin:0;">
+                            <label>Nomor Nota Penjualan</label>
+                            <div class="nota-input-wrapper">
+                                <div class="nota-prefix" id="prefix-nota-piutang">TKBW------</div>
+                                <input type="text" id="piutang-tab-nota" placeholder="Contoh: 012" autocomplete="off"
+                                    maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Nominal Piutang</label>
                         <input type="number" id="piutang-tab-nominal" placeholder="Masukkan nominal piutang"
                             autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label>Waktu Catat (Tanggal &amp; Jam)</label>
-                        <input type="datetime-local" id="piutang-tab-waktu">
                     </div>
                     <div class="form-group" style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
                         <button class="btn-cek" onclick="startPiutangCameraTab()"><i class="bi bi-camera"></i> Buka
@@ -2371,17 +2374,19 @@
                         <label>No. Anggota</label>
                         <input type="text" id="piutang-no-anggota" placeholder="Masukkan No. Anggota">
                     </div>
-                    <div class="form-group">
-                        <label>Nota Penjualan</label>
-                        <input type="text" id="piutang-nota" placeholder="Masukkan Nomor Nota">
+                    <div class="form-group" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                        <div class="form-group" style="flex:1; min-width:175px; margin:0;">
+                            <label>Waktu Catat (Tanggal &amp; Jam)</label>
+                            <input type="datetime-local" id="piutang-waktu" oninput="syncModalNotaPrefix()">
+                        </div>
+                        <div class="form-group" style="flex:1; min-width:175px; margin:0;">
+                            <label>Nota Penjualan</label>
+                            <input type="text" id="piutang-nota" placeholder="Masukkan Nomor Nota">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Nominal Piutang</label>
                         <input type="number" id="piutang-nominal" placeholder="Masukkan nominal piutang">
-                    </div>
-                    <div class="form-group">
-                        <label>Waktu Catat (Tanggal &amp; Jam)</label>
-                        <input type="datetime-local" id="piutang-waktu">
                     </div>
                     <div style="margin-bottom:15px;">
                         <video id="piutang-video" autoplay playsinline muted
@@ -2453,18 +2458,21 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-top:12px;">
-                    <label>Nomor Nota Penjualan Kasir:</label>
-                    <div class="nota-input-wrapper">
-                        <div class="nota-prefix" id="prefix-nota">TKBW------</div>
-                        <input type="text" id="nota-toko" placeholder="Contoh: 012" autocomplete="off" maxlength="4"
-                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <div class="form-group"
+                    style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                    <div class="form-group" style="flex:1; min-width:175px; margin:0;">
+                        <label>Waktu Transaksi (Tanggal &amp; Jam)</label>
+                        <input type="datetime-local" id="redeem-waktu"
+                            oninput="syncNotaPrefix('redeem-waktu', 'prefix-nota')">
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Waktu Transaksi (Tanggal &amp; Jam)</label>
-                    <input type="datetime-local" id="redeem-waktu">
+                    <div class="form-group" style="flex:1; min-width:175px; margin:0;">
+                        <label>Nomor Nota Penjualan Kasir:</label>
+                        <div class="nota-input-wrapper">
+                            <div class="nota-prefix" id="prefix-nota">TKBW------</div>
+                            <input type="text" id="nota-toko" placeholder="Contoh: 012" autocomplete="off"
+                                maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="btn-row" id="btn-row-single">
@@ -5070,7 +5078,7 @@
             safeSetValue('nominal-redeem-piutang', '');
             if (document.getElementById('chk-piutang')) document.getElementById('chk-piutang').checked = false;
             togglePiutangField();
-            _setNowWaktu('redeem-waktu');
+            _setNowWaktu('redeem-waktu', 'prefix-nota');
         }
 
         function _waktuNowVal() {
@@ -5078,7 +5086,11 @@
             var p = function (n) { return (n < 10 ? '0' : '') + n; };
             return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
         }
-        function _setNowWaktu(id) { var el = document.getElementById(id); if (el) el.value = _waktuNowVal(); }
+        function _setNowWaktu(id, prefixId) {
+            var el = document.getElementById(id);
+            if (el) el.value = _waktuNowVal();
+            if (prefixId) syncNotaPrefix(id, prefixId);
+        }
         function _getWaktu(id) {
             var el = document.getElementById(id);
             if (!el) return _waktuNowVal();
@@ -5089,6 +5101,38 @@
             if (!v) return '-';
             var m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
             return m ? (m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5]) : String(v);
+        }
+        function _notaPrefixTail(v) {
+            var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+            return m ? (String(m[1]).slice(-2) + m[2] + m[3]) : '';
+        }
+        function _notaPrefixKode() {
+            return (typeof userToko !== 'undefined' && userToko && userToko.kodeToko) ? String(userToko.kodeToko).trim() : '';
+        }
+        function _notaPrefixFromWaktu(waktuId) {
+            var kode = _notaPrefixKode();
+            var el = document.getElementById(waktuId);
+            var tail = _notaPrefixTail(el ? el.value : '');
+            return (kode && tail) ? (kode + tail) : '';
+        }
+        // Nota prefix (kode toko + tanggal) selalu mengikuti field Waktu Transaksi
+        function syncNotaPrefix(waktuId, prefixId) {
+            try {
+                var p = _notaPrefixFromWaktu(waktuId);
+                if (p) safeSetText(prefixId, p);
+            } catch (e) { }
+        }
+        function syncModalNotaPrefix() {
+            try {
+                if (!pendingPiutangNotaPrefix) return;
+                var newP = _notaPrefixFromWaktu('piutang-waktu');
+                if (!newP) return;
+                var el = document.getElementById('piutang-nota');
+                if (el && el.value.indexOf(pendingPiutangNotaPrefix) === 0) {
+                    el.value = newP + el.value.slice(pendingPiutangNotaPrefix.length);
+                }
+                pendingPiutangNotaPrefix = newP;
+            } catch (e) { }
         }
 
         // ==========================================
@@ -5471,8 +5515,8 @@
             if (!document.getElementById('view-login').classList.contains('hidden')) {
                 document.body.classList.add('login-active');
             }
-            _setNowWaktu('redeem-waktu');
-            _setNowWaktu('piutang-tab-waktu');
+            _setNowWaktu('redeem-waktu', 'prefix-nota');
+            _setNowWaktu('piutang-tab-waktu', 'prefix-nota-piutang');
             _setNowWaktu('piutang-waktu');
         });
 
@@ -5734,7 +5778,7 @@
                         if (piutangChecked) {
                             google.script.run.withSuccessHandler(function (res) { hideLoading(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).catatPiutangVoucher(k, getKasirInfo(), n, unifiedPiutangPhoto, 'piu_' + v.kode + '_' + Date.now() + '.jpg', Number(inlineNom), _getWaktu('redeem-waktu'));
                         } else {
-                            google.script.run.withSuccessHandler(function (res) { hideLoading(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else if (res.status == 'sudah_pakai_struk') { tampilkanStruk(res.nota, 'used_error'); Swal.fire('Perhatian', 'Voucher sudah diredeem sebelumnya!', 'warning'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).prosesVoucher(k, getKasirInfo(), n, _getWaktu('redeem-waktu'));
+                            google.script.run.withSuccessHandler(function (res) { hideLoading(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else if (res.status == 'sudah_pakai_struk') { tampilkanStruk(res.nota, 'used_error'); Swal.fire('Perhatian', 'Voucher sudah diredeem sebelumnya!', 'warning'); } else { Swal.fire('Gagal', res.msg, 'error'); }                             }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).prosesVoucher(k, 'redeem', getKasirInfo(), n, _getWaktu('redeem-waktu'));
                         }
                     }
                 });
@@ -6026,6 +6070,7 @@
         var pendingPiutangMode = null;
         var pendingPiutangRedeemData = null;
         var pendingPiutangPhoto = null;
+        var pendingPiutangNotaPrefix = '';
         var piutangTabStream = null;
         var inlinePiutangPhoto = null;
         var piutangVerifiedMember = null;
@@ -6275,6 +6320,8 @@
             document.getElementById('piutang-no-anggota').value = '';
             var inlineNota = document.getElementById('piutang-inline-nota') ? document.getElementById('piutang-inline-nota').value.trim() : '';
             document.getElementById('piutang-nota').value = nota || inlineNota || '';
+            var pnEl = document.getElementById('prefix-nota');
+            pendingPiutangNotaPrefix = ((isRedeem || isPiutangOnly) && pnEl && String(nota || '').indexOf(pnEl.innerText) === 0) ? pnEl.innerText : '';
             var inlineNominal = document.getElementById('nominal-redeem-piutang') ? document.getElementById('nominal-redeem-piutang').value.trim() : '';
             document.getElementById('piutang-nominal').value = inlineNominal || '';
             var wEl = document.getElementById('piutang-waktu');
@@ -6317,7 +6364,7 @@
         }
         function clearPiutangTabForm() {
             ['piutang-tab-no-anggota', 'piutang-tab-nota', 'piutang-tab-nominal'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
-            _setNowWaktu('piutang-tab-waktu');
+            _setNowWaktu('piutang-tab-waktu', 'prefix-nota-piutang');
             resetPiutangMemberInfo();
             var preview = document.getElementById('piutang-tab-photo-preview'); if (preview) { preview.src = ''; preview.style.display = 'none'; }
             var video = document.getElementById('piutang-tab-video'); if (video) { video.style.display = 'none'; } // No srcObject to clear

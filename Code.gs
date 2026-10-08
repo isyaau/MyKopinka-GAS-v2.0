@@ -1476,6 +1476,10 @@ function aktifkanVoucher(kode) {
 }
 
 function prosesVoucher(kode, mode, userToko, notaToko, waktuInput) {
+  // Kompatibilitas klien lama: prosesVoucher(kode, userToko, notaToko[, waktuInput])
+  if (mode !== 'cek' && mode !== 'redeem') {
+    waktuInput = notaToko; notaToko = userToko; userToko = mode; mode = 'redeem';
+  }
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sVoucher = ss.getSheetByName(SHEET_VOUCHERS);
