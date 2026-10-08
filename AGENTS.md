@@ -26,4 +26,4 @@
 ## Catatan
 - Platform: Windows / PowerShell 5.1. `&&` tidak didukung — gunakan `;` atau `if ($?) { ... }`.
 - Peringatan `LF will be replaced by CRLF` dari git bersifat normal, bisa diabaikan.
-- Remote: `origin` → `https://github.com/isyaau/Mykopinka-GAS.git`, branch `main`.
+- Remote: `origin` → `https://github.com/isyaau/MyKopinka-GAS-v2.0.git`, branch `main`.
