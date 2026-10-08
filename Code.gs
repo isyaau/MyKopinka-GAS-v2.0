@@ -20,7 +20,7 @@ var APP_VERSION = "2.3.4";
 function getAppVersion() { return APP_VERSION; }
 
 function doGet(e) {
-  return HtmlService.createTemplateFromFile('index').evaluate()
+  return HtmlService.createTemplateFromFile('Index').evaluate()
       .setTitle('MyKopinka v' + APP_VERSION)
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
