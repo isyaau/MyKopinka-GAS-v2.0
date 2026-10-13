@@ -2573,7 +2573,26 @@
         </div>
 
         <div id="view-admin" class="hidden">
-            <div id="admin-undo-section" class="admin-section" style="border:2px solid #f39c12;">
+            <div id="admin-action-section" class="admin-section"
+                style="border:2px solid #8e44ad; background:#faf7fd; padding:15px; margin-bottom:15px;">
+                <h3 style="color:#8e44ad; margin-top:0;"><i class="bi bi-lightning-charge-fill"
+                        style="color:#8e44ad;"></i> Aksi Cepat Admin</h3>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button style="flex:1; min-width:220px; background:#d35400; padding:14px; font-size:13px;"
+                        onclick="bukaModalBatalRedeem()"><i class="bi bi-arrow-counterclockwise"></i> BATALKAN REDEEM
+                        (UNDO)</button>
+                    <button style="flex:1; min-width:240px; background:#2980b9; padding:14px; font-size:13px;"
+                        onclick="bukaModalKelolaVoucher()"><i class="bi bi-search"></i> CARI MEMBER &amp; KELOLA STATUS
+                        VOUCHER</button>
+                </div>
+            </div>
+
+            <div id="modal-batal-redeem" class="modal-overlay hidden">
+                <div class="modal-content" style="max-width:600px; text-align:left;">
+                    <button class="close-btn"
+                        style="color:#c0392b !important; background:#f1f2f6 !important;"
+                        onclick="tutupModal('modal-batal-redeem')">×</button>
+            <div id="admin-undo-section" style="border:none; box-shadow:none; padding:0;">
                 <h3 style="color:#d35400;"><i class="bi bi-arrow-counterclockwise" style="color:#d35400;"></i> Batalkan
                     Redeem (Undo)</h3>
                 <div class="sub-nav" style="margin-bottom:15px; background:#fdf2e9;">
@@ -2608,8 +2627,15 @@
                     </div>
                 </div>
             </div>
+                </div>
+            </div>
 
-            <div id="admin-member-section" class="admin-section" style="border:2px solid #3498db;">
+            <div id="modal-kelola-voucher" class="modal-overlay hidden">
+                <div class="modal-content" style="max-width:620px; text-align:left;">
+                    <button class="close-btn"
+                        style="color:#c0392b !important; background:#f1f2f6 !important;"
+                        onclick="tutupModal('modal-kelola-voucher')">×</button>
+            <div id="admin-member-section" style="border:none; box-shadow:none; padding:0;">
                 <h3 style="color:#2980b9;"><i class="bi bi-search" style="color:#2980b9;"></i> Cari Member & Kelola
                     Status Voucher</h3>
                 <div class="input-group">
@@ -2650,6 +2676,8 @@
                             onclick="prosesStatusMember('Active')"><i class="bi bi-check2-circle"></i> AKTIFKAN SEMUA
                             VOUCHER</button>
                     </div>
+                </div>
+            </div>
                 </div>
             </div>
 
@@ -4899,15 +4927,8 @@
                         return;
                     }
 
-                    safeSetText('st-total', res.stats.totalVoucher);
-                    safeSetText('st-active', res.stats.totalActive);
-                    safeSetText('st-used', res.stats.totalUsed);
-                    safeSetText('st-expired', res.stats.totalExpired);
-                    safeSetText('st-blokir', res.stats.totalBlokir);
-
                     rawDataRekap = res.rekap;
                     applyFilterRekap();
-                    updateRekapChart();
                 } catch (e) {
                     Swal.fire('Error', 'Gagal memproses data server.', 'error');
                 }
@@ -4949,9 +4970,53 @@
                 return isStatusMatch && isTextMatch && isBulanMatch && isTahunMatch;
             });
             rekapPage = 1;
+            renderAdminStats(rekapFiltered);
             renderTableRekap();
             updateRekapChart();
         }
+
+        // Kartu statistik mengikuti data yang sedang difilter agar selalu konsisten dengan grafik & tabel
+        function renderAdminStats(list) {
+            var c = { 'Active': 0, 'Used': 0, 'Expired': 0, 'Diblokir': 0, 'Belum Aktif': 0 };
+            list.forEach(function (v) {
+                var st = v[4];
+                if (c.hasOwnProperty(st)) c[st]++;
+                else c['Diblokir']++;
+            });
+            setStatNumber('st-total', list.length);
+            setStatNumber('st-active', c['Active']);
+            setStatNumber('st-used', c['Used']);
+            setStatNumber('st-expired', c['Expired']);
+            setStatNumber('st-blokir', c['Diblokir']);
+        }
+
+        function setStatNumber(id, n) {
+            var el = document.getElementById(id);
+            if (el) el.innerText = Number(n || 0).toLocaleString('id-ID');
+        }
+
+        // Plugin kecil untuk menampilkan angka di atas tiap batang grafik
+        var rekapValueLabel = {
+            id: 'rekapValueLabel',
+            afterDatasetsDraw: function (chart) {
+                var ctx = chart.ctx;
+                chart.data.datasets.forEach(function (ds, di) {
+                    var meta = chart.getDatasetMeta(di);
+                    if (!meta || meta.hidden || !meta.data) return;
+                    meta.data.forEach(function (el, i) {
+                        var val = Number(ds.data[i]) || 0;
+                        if (val === 0) return;
+                        ctx.save();
+                        ctx.fillStyle = '#2c3e50';
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(val.toLocaleString('id-ID'), el.x, el.y - 4);
+                        ctx.restore();
+                    });
+                });
+            }
+        };
 
         function updateRekapChart() {
             setTimeout(function () {
@@ -4963,6 +5028,7 @@
                 rekapFiltered.forEach(function (v) {
                     var st = v[4];
                     if (stats.hasOwnProperty(st)) stats[st]++;
+                    else stats['Diblokir']++;
                 });
 
                 rekapChartInstance = new Chart(ctx.getContext('2d'), {
@@ -4970,11 +5036,12 @@
                     data: {
                         labels: ['Aktif', 'Terpakai', 'Expired', 'Blokir', 'Belum Aktif'],
                         datasets: [{
-                            label: 'Jumlah Voucher (Hasil Filter)',
+                            label: 'Jumlah Voucher (Sesuai Filter)',
                             data: [stats['Active'], stats['Used'], stats['Expired'], stats['Diblokir'], stats['Belum Aktif']],
                             backgroundColor: ['#27ae60', '#e74c3c', '#f39c12', '#7f8c8d', '#3498db']
                         }]
                     },
+                    plugins: [rekapValueLabel],
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
                 });
             }, 150);
@@ -5003,6 +5070,134 @@
             safeSetText('page-info-rekap', 'Hal ' + rekapPage + ' / ' + tot);
             document.getElementById('btn-prev-rekap').disabled = (rekapPage === 1);
             document.getElementById('btn-next-rekap').disabled = (rekapPage === tot);
+        }
+
+        // ==========================================
+        // AKSI CEPAT ADMIN (MODAL)
+        // ==========================================
+        function bukaModalBatalRedeem() {
+            setModeBatal('single');
+            var m = document.getElementById('modal-batal-redeem');
+            if (!m) return;
+            m.classList.remove('hidden');
+            setTimeout(function () { m.classList.add('show'); }, 10);
+        }
+
+        function bukaModalKelolaVoucher() {
+            var m = document.getElementById('modal-kelola-voucher');
+            if (!m) return;
+            var v = document.getElementById('verifikasi-member');
+            if (v) v.style.display = 'none';
+            m.classList.remove('hidden');
+            setTimeout(function () { m.classList.add('show'); }, 10);
+            setTimeout(function () { var inp = document.getElementById('no-anggota-status'); if (inp) inp.focus(); }, 300);
+        }
+
+        function setModeBatal(mode) {
+            var bS = document.getElementById('mode-batal-single');
+            var bM = document.getElementById('mode-batal-multi');
+            var aS = document.getElementById('area-batal-single');
+            var aM = document.getElementById('area-batal-multi');
+            if (bS) bS.classList.toggle('active', mode === 'single');
+            if (bM) bM.classList.toggle('active', mode === 'multi');
+            if (aS) aS.classList.toggle('hidden', mode !== 'single');
+            if (aM) aM.classList.toggle('hidden', mode !== 'multi');
+        }
+
+        function prosesBatal() {
+            var el = document.getElementById('kode-batal');
+            var kode = el ? el.value.trim() : '';
+            if (!kode) return Swal.fire('Perhatian', 'Ketik Kode Voucher!', 'warning');
+            Swal.fire({
+                title: 'Batalkan Redeem?',
+                html: 'Voucher <b>' + kode + '</b> akan dikembalikan ke status <b>Active</b> dan riwayat transaksinya dihapus.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d35400',
+                cancelButtonColor: '#95a5a6',
+                confirmButtonText: 'Ya, Batalkan!',
+                cancelButtonText: 'Batal',
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(function (r) {
+                if (!r.isConfirmed) return;
+                showLoading('Membatalkan redeem...');
+                google.script.run.withSuccessHandler(function (res) {
+                    hideLoading();
+                    if (res.status === 'sukses') {
+                        safeSetValue('kode-batal', '');
+                        Swal.fire({ title: 'Berhasil', text: res.msg, icon: 'success', allowOutsideClick: false, allowEscapeKey: false }).then(function () { loadAdminData(); });
+                    } else { Swal.fire('Gagal', res.msg, 'error'); }
+                }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).batalkanRedeem(kode);
+            });
+        }
+
+        function cariBatalMultiUI() {
+            var el = document.getElementById('query-batal-multi');
+            var q = el ? el.value.trim() : '';
+            if (!q) return Swal.fire('Perhatian', 'Ketik No. Anggota!', 'warning');
+            showLoading('Mencari voucher terpakai...');
+            google.script.run.withSuccessHandler(function (res) {
+                hideLoading();
+                var area = document.getElementById('batal-multi-result-area');
+                var c = document.getElementById('batal-multi-cards-container');
+                if (!c || !area) return;
+                c.innerHTML = '';
+                if (res.status === 'sukses' && res.data && res.data.length > 0) {
+                    var used = res.data.filter(function (v) { return v.status === 'Used'; });
+                    if (used.length === 0) {
+                        c.innerHTML = '<p style="text-align:center; padding:20px; color:#777;">Tidak ada voucher berstatus <b>Used</b> untuk anggota ini.</p>';
+                    } else {
+                        used.forEach(function (v) {
+                            c.innerHTML += '<div class="v-card"><div class="v-card-header"><div style="display:flex; align-items:center;">' +
+                                '<input type="checkbox" class="card-checkbox batal-v-checkbox" value="' + v.kode + '" onchange="updateBatalMultiCount()" style="margin-right:8px;">' +
+                                '<b style="font-family:monospace;">' + v.kode + '</b></div>' +
+                                '<span class="badge-status" style="background:#e74c3c;">Used</span></div>' +
+                                '<div class="v-card-body">Nilai: <b style="color:#27ae60;">Rp ' + (Number(v.nilai) || 0).toLocaleString('id-ID') + '</b><br>Exp: ' + v.expDate + '</div></div>';
+                        });
+                    }
+                    area.style.display = 'block';
+                    updateBatalMultiCount();
+                } else {
+                    area.style.display = 'none';
+                    Swal.fire('Tidak Ditemukan', res.msg || 'Data tidak ditemukan.', 'error');
+                }
+            }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).cariVoucherMulti(q);
+        }
+
+        function updateBatalMultiCount() {
+            var n = document.querySelectorAll('.batal-v-checkbox:checked').length;
+            var el = document.getElementById('batal-multi-count');
+            if (el) el.innerText = n;
+        }
+
+        function prosesBatalMassalUI() {
+            var selected = [];
+            document.querySelectorAll('.batal-v-checkbox:checked').forEach(function (cb) { selected.push(cb.value); });
+            if (selected.length === 0) return Swal.fire('Perhatian', 'Pilih minimal satu voucher!', 'warning');
+            Swal.fire({
+                title: 'Batalkan Redeem Terpilih?',
+                html: '<b>' + selected.length + '</b> voucher terpilih akan dikembalikan ke status <b>Active</b> dan riwayatnya dihapus.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d35400',
+                cancelButtonColor: '#95a5a6',
+                confirmButtonText: 'Ya, Batalkan!',
+                cancelButtonText: 'Batal',
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(function (r) {
+                if (!r.isConfirmed) return;
+                showLoading('Membatalkan redeem...');
+                google.script.run.withSuccessHandler(function (res) {
+                    hideLoading();
+                    if (res.status === 'sukses') {
+                        document.getElementById('batal-multi-result-area').style.display = 'none';
+                        safeSetValue('query-batal-multi', '');
+                        Swal.fire({ title: 'Berhasil', text: res.msg, icon: 'success', allowOutsideClick: false, allowEscapeKey: false }).then(function () { loadAdminData(); });
+                    } else { Swal.fire('Gagal', res.msg, 'error'); }
+                }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).batalkanRedeemMassal(selected);
+            });
         }
 
         // ==========================================
@@ -5169,16 +5364,10 @@
             else if (tab === 'admin-unit') { loadUnitAdmin(); }
             else if (tab === 'laporan') { loadLaporan(); }
             else if (tab === 'admin') {
-                var d = new Date();
-                safeSetValue('filter-rekap-bulan', String(d.getMonth() + 1).padStart(2, '0'));
-                safeSetValue('filter-rekap-tahun', d.getFullYear());
-
                 var isViewer = (currentRole === 'Viewer Voucher');
-                var undoSec = document.getElementById('admin-undo-section');
-                var memberSec = document.getElementById('admin-member-section');
+                var actSec = document.getElementById('admin-action-section');
                 var statsSec = document.getElementById('admin-stats-section');
-                if (undoSec) undoSec.style.display = isViewer ? 'none' : 'block';
-                if (memberSec) memberSec.style.display = isViewer ? 'none' : 'block';
+                if (actSec) actSec.style.display = isViewer ? 'none' : 'block';
                 if (statsSec) statsSec.style.display = isViewer ? 'none' : 'flex';
                 loadAdminData();
             }
@@ -5900,7 +6089,9 @@
                 text: "Ubah status SEMUA voucher milik " + u + " menjadi " + status + "?",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: status === 'Active' ? '#27ae60' : '#d33'
+                confirmButtonColor: status === 'Active' ? '#27ae60' : '#d33',
+                allowOutsideClick: false,
+                allowEscapeKey: false
             }).then((result) => {
                 if (result.isConfirmed) {
                     showLoading("Memproses Perubahan...");
@@ -5928,7 +6119,9 @@
                 text: "Ubah status " + selected.length + " voucher terpilih menjadi " + status + "?",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: status === 'Active' ? '#27ae60' : '#d33'
+                confirmButtonColor: status === 'Active' ? '#27ae60' : '#d33',
+                allowOutsideClick: false,
+                allowEscapeKey: false
             }).then((result) => {
                 if (result.isConfirmed) {
                     showLoading("Memproses Perubahan...");
