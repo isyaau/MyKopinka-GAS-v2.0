@@ -5599,7 +5599,7 @@
                 setTimeout(function () { prefetchRekapHutangAdmin(); }, 200);
             }
             else if (res.role === 'Admin Potongan') {
-                ['tab-redeem', 'tab-laporan', 'tab-admin-potongan', 'tab-admin-toko', 'tab-kelola-akun'].forEach(function (id) { document.getElementById(id).classList.remove('hidden'); });
+                ['tab-redeem', 'tab-laporan', 'tab-admin', 'tab-admin-potongan', 'tab-admin-toko', 'tab-kelola-akun'].forEach(function (id) { document.getElementById(id).classList.remove('hidden'); });
                 document.getElementById('info-toko').innerHTML = "Lokasi: " + userToko.toko; document.getElementById('info-role').innerHTML = "Staff: " + res.user + " <span class='badge-role' style='background-color:#d35400;'>ADMIN POTONGAN</span>"; switchTab('redeem');
             }
             else if (res.role === 'Viewer Voucher') {
