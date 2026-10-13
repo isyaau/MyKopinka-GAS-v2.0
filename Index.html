@@ -4808,6 +4808,17 @@
                 <input type="number" id="ep-nilai" min="0" placeholder="0">
             </div>
 
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Toko</label>
+                    <input type="text" id="ep-toko" placeholder="Contoh: Toko Sutomo">
+                </div>
+                <div class="form-group">
+                    <label>Petugas</label>
+                    <input type="text" id="ep-petugas" placeholder="Nama petugas">
+                </div>
+            </div>
+
             <div class="form-group" style="position:relative;">
                 <label>Cari Nama / No Anggota Pelanggan</label>
                 <input type="text" id="ep-member-search" autocomplete="off"
@@ -9339,9 +9350,10 @@
             });
         }
 
-        // ===== EDIT TRANSAKSI KREDIT TOKO (ADMIN) =====
+        // ===== EDIT TRANSAKSI KREDIT TOKO (ADMIN & KASIR) =====
         var _epMemberResults = [];
         var _epSearchTimer = null;
+        var _epSource = 'admin';
 
         function _epWaktuToInput(w) {
             var m = String(w || '').match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
@@ -9349,23 +9361,42 @@
             return m[3] + '-' + m[2] + '-' + m[1] + 'T' + (m[4] || '00') + ':' + (m[5] || '00');
         }
 
-        function bukaEditPiutangAdmin(globalIdx) {
-            var h = filteredHutangAdmin[globalIdx];
-            if (!h) return Swal.fire('Error', 'Data transaksi tidak ditemukan.', 'error');
+        function _epFillForm(h) {
             document.getElementById('ep-id').value = h.id || '';
             document.getElementById('ep-waktu').value = _epWaktuToInput(h.waktu);
             document.getElementById('ep-nota').value = String(h.nota || '').replace(/^'/, '');
             document.getElementById('ep-nilai').value = Number(h.nilai) || 0;
+            document.getElementById('ep-toko').value = String(h.toko || '').replace(/^'/, '');
+            document.getElementById('ep-petugas').value = String(h.petugas || '').replace(/^'/, '');
             document.getElementById('ep-noanggota').value = h.noAnggota || '';
             document.getElementById('ep-nama').value = h.nama || '';
             document.getElementById('ep-member-search').value = '';
             var box = document.getElementById('ep-member-results');
             if (box) { box.innerHTML = ''; box.style.display = 'none'; }
             _epMemberResults = [];
+        }
+
+        function _epOpenModal() {
             var m = document.getElementById('modal-edit-piutang-admin');
             if (!m) return;
             m.classList.remove('hidden');
             setTimeout(function () { m.classList.add('show'); }, 10);
+        }
+
+        function bukaEditPiutangAdmin(globalIdx) {
+            var h = filteredHutangAdmin[globalIdx];
+            if (!h) return Swal.fire('Error', 'Data transaksi tidak ditemukan.', 'error');
+            _epSource = 'admin';
+            _epFillForm(h);
+            _epOpenModal();
+        }
+
+        function bukaEditPiutangKasir(globalIdx) {
+            var h = (kasirRekapFiltered && kasirRekapFiltered[globalIdx]) || (kasirRekapData && kasirRekapData[globalIdx]);
+            if (!h) return Swal.fire('Error', 'Data transaksi tidak ditemukan.', 'error');
+            _epSource = 'kasir';
+            _epFillForm(h);
+            _epOpenModal();
         }
 
         function editPiutangSearchMember() {
@@ -9411,11 +9442,14 @@
         }
 
         function simpanEditPiutangAdmin() {
+            var src = _epSource;
             var id = document.getElementById('ep-id').value;
             var waktu = document.getElementById('ep-waktu').value;
             var nota = document.getElementById('ep-nota').value.trim();
             var nilai = document.getElementById('ep-nilai').value;
             var noA = document.getElementById('ep-noanggota').value.trim();
+            var toko = document.getElementById('ep-toko').value.trim();
+            var petugas = document.getElementById('ep-petugas').value.trim();
             if (!id) return Swal.fire('Gagal', 'ID transaksi tidak valid.', 'error');
             if (!waktu) return Swal.fire('Perhatian', 'Waktu transaksi wajib diisi!', 'warning');
             if (!nota) return Swal.fire('Perhatian', 'No Nota wajib diisi!', 'warning');
@@ -9439,7 +9473,8 @@
                     if (res && res.status === 'sukses') {
                         tutupModal('modal-edit-piutang-admin');
                         Swal.fire('Berhasil', res.msg, 'success').then(function () {
-                            loadRekapHutangAdmin(true);
+                            if (src === 'kasir') { fetchKasirRekapServer(); }
+                            else { loadRekapHutangAdmin(true); }
                         });
                     } else {
                         Swal.fire('Gagal', (res && res.msg) ? res.msg : 'Terjadi kesalahan.', 'error');
@@ -9447,7 +9482,7 @@
                 }).withFailureHandler(function (err) {
                     hideLoading();
                     Swal.fire('Error', String(err), 'error');
-                }).editPiutangAdmin(id, { waktu: waktu, nota: nota, noAnggota: noA, nilai: Number(nilai) });
+                }).editPiutangAdmin(id, { waktu: waktu, nota: nota, noAnggota: noA, nilai: Number(nilai), toko: toko, petugas: petugas });
             });
         }
 
@@ -10471,7 +10506,7 @@ var skel = '';
                         '<td style="text-align:right;">' + nilai.toLocaleString('id-ID') + '</td>' +
                         '<td>' + chipNotif + '</td>' +
                         '<td style="text-align:center; white-space:nowrap;">' +
-                        '<button class="btn-page" style="background:#f59e0b; border-color:#f59e0b; color:#fff;" onclick="editNotaKasir(' + globalIdx + ')" title="Edit No Nota"><i class="bi bi-pencil-square"></i> Edit</button> ' +
+                        '<button class="btn-page" style="background:#f59e0b; border-color:#f59e0b; color:#fff;" onclick="bukaEditPiutangKasir(' + globalIdx + ')" title="Edit Transaksi"><i class="bi bi-pencil-square"></i> Edit</button> ' +
                         '<button class="btn-page" style="background:#25D366; border-color:#25D366; color:#fff; white-space:nowrap;" onclick="kirimUlangWaKasir(' + globalIdx + ')"><i class="bi bi-whatsapp"></i> Kirim Ulang</button>' +
                         '</td>' +
                         '</tr>';
@@ -10602,47 +10637,8 @@ var skel = '';
                 .markPiutangNotifBulk(ids, 'Terkirim');
         }
 
-        function editNotaKasir(globalIdx) {
-            var h = (kasirRekapFiltered && kasirRekapFiltered[globalIdx]) || (kasirRekapData && kasirRekapData[globalIdx]);
-            if (!h) return Swal.fire('Error', 'Data tidak ditemukan.', 'error');
-            var current = String(h.nota || '').replace(/^'/, '');
-            Swal.fire({
-                title: 'Edit No Nota Toko',
-                html:
-                    '<div style="text-align:left; font-size:13px;">' +
-                    '<div><b>No Anggota:</b> ' + (h.noAnggota || '-') + ' - ' + (h.nama || '-') + '</div>' +
-                    '<div><b>Kode Transaksi:</b> ' + (h.id || '-') + '</div>' +
-                    '<div style="margin:10px 0;"><label>No Nota Saat Ini</label><input id="swal-nota-old" class="swal2-input" value="' + escapeHtml(current) + '" readonly></div>' +
-                    '<div><label>No Nota Baru</label><input id="swal-nota-new" class="swal2-input" placeholder="Masukkan No Nota baru" autocomplete="off"></div>' +
-                    '</div>',
-                showCancelButton: true,
-                confirmButtonText: 'Simpan',
-                cancelButtonText: 'Batal',
-                preConfirm: function () {
-                    var baru = document.getElementById('swal-nota-new').value.trim();
-                    if (baru === '') return Swal.showValidationMessage('No Nota baru wajib diisi');
-                    return { baru: baru };
-                }
-            }).then(function (res) {
-                if (res.isConfirmed) {
-                    var baru = res.value.baru;
-                    showLoading('Menyimpan perubahan...');
-                    google.script.run.withSuccessHandler(function (r) {
-                        hideLoading();
-                        if (r && r.status === 'sukses') {
-                            if (h.nota !== baru) h.nota = baru;
-                            renderKasirRekapTable();
-                            Swal.fire('Berhasil', r.msg || 'No Nota berhasil diperbarui.', 'success');
-                        } else {
-                            Swal.fire('Gagal', (r && r.msg) || 'Gagal menyimpan.', 'error');
-                        }
-                    }).withFailureHandler(function (err) {
-                        hideLoading();
-                        Swal.fire('Error', String(err), 'error');
-                    }).editNotaPiutangKasir(h.id, baru);
-                }
-            });
-        }
+        // Alias lama: tombol edit kasir kini membuka modal edit lengkap.
+        function editNotaKasir(globalIdx) { bukaEditPiutangKasir(globalIdx); }
 
         function escapeHtml(s) {
             return String(s).replace(/[&<>"']/g, function (m) {

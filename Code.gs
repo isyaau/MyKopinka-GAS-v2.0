@@ -16,7 +16,7 @@ var FOLDER_NOTIF_ID = "1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT";
 var FOLDER_KREDIT_TOKO_ID = "1zFKB6N4vjpJtnY1k_G6c1hutIhshLYyW";
 
 // Versi aplikasi terpusat (tampil di halaman login & header semua panel/role)
-var APP_VERSION = "2.3.8";
+var APP_VERSION = "2.3.9";
 function getAppVersion() { return APP_VERSION; }
 
 function doGet(e) {
@@ -2642,6 +2642,9 @@ function editPiutangAdmin(idPiutang, payload) {
     var noA = _toNoAnggota(String(p.noAnggota || '').replace(/'/g, '').trim());
     if (!noA) return { status: 'error', msg: 'No Anggota tidak boleh kosong.' };
 
+    var tokoBaru = String(p.toko || '').replace(/^'/, '').trim();
+    var petugasBaru = String(p.petugas || '').replace(/^'/, '').trim();
+
     var nilaiBaru = Number(p.nilai);
     if (isNaN(nilaiBaru) || nilaiBaru < 0) return { status: 'error', msg: 'Nominal tidak valid.' };
 
@@ -2659,7 +2662,7 @@ function editPiutangAdmin(idPiutang, payload) {
     }
     if (found === -1) return { status: 'error', msg: 'Transaksi piutang tidak ditemukan.' };
 
-    // Kolom: A(1)Waktu, C(3)Nota Toko, F(6)Nominal, G(7)No Anggota
+    // Kolom: A(1)Waktu, C(3)Nota Toko, D(4)Toko, E(5)Petugas, F(6)Nominal, G(7)No Anggota
     var waktuIso = String(p.waktu || '').trim();
     var dm = waktuIso.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
     if (dm) {
@@ -2671,6 +2674,8 @@ function editPiutangAdmin(idPiutang, payload) {
     }
 
     sPi.getRange(found, 3).setValue("'" + notaBaru);
+    sPi.getRange(found, 4).setValue(tokoBaru === '' ? '' : ("'" + tokoBaru));
+    sPi.getRange(found, 5).setValue(petugasBaru === '' ? '' : ("'" + petugasBaru));
     sPi.getRange(found, 6).setValue(nilaiBaru);
     sPi.getRange(found, 7).setValue("'" + noA);
 
