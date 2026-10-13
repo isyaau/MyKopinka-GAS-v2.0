@@ -16,7 +16,7 @@ var FOLDER_NOTIF_ID = "1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT";
 var FOLDER_KREDIT_TOKO_ID = "1zFKB6N4vjpJtnY1k_G6c1hutIhshLYyW";
 
 // Versi aplikasi terpusat (tampil di halaman login & header semua panel/role)
-var APP_VERSION = "2.3.7";
+var APP_VERSION = "2.3.8";
 function getAppVersion() { return APP_VERSION; }
 
 function doGet(e) {
@@ -2596,6 +2596,86 @@ function editNotaPiutangKasir(idPiutang, newNota) {
     sPi.getRange(found, 3).setValue("'" + notaBaru);
     _invalidateKreditCaches();
     return { status: 'sukses', msg: 'No Nota berhasil diperbarui.' };
+  } catch (e) {
+    return { status: 'error', msg: 'Server Error: ' + e.toString() };
+  }
+}
+
+// Cari member berdasarkan nama / no anggota / username (untuk edit piutang admin)
+function cariMemberUntukPiutang(query) {
+  try {
+    var q = String(query || '').trim().toLowerCase();
+    if (q === '') return { status: 'sukses', data: [] };
+    var dataUsers = _getCachedUsersData();
+    var res = [];
+    for (var i = 1; i < dataUsers.length; i++) {
+      var uname = String(dataUsers[i][0] || '').trim();
+      var nama = String(dataUsers[i][2] || '').trim();
+      var noA = String(dataUsers[i][18] || '').replace(/'/g, '').trim() || uname.replace(/'/g, '').trim();
+      if (!noA && !nama) continue;
+      var hay = (nama + ' ' + noA + ' ' + uname).toLowerCase();
+      if (hay.indexOf(q) !== -1) {
+        res.push({
+          noAnggota: noA,
+          nama: nama || '-',
+          kelompok: String(dataUsers[i][4] || '-'),
+          username: uname
+        });
+        if (res.length >= 30) break;
+      }
+    }
+    return { status: 'sukses', data: res };
+  } catch (e) {
+    return { status: 'error', msg: 'Server Error: ' + e.toString() };
+  }
+}
+
+// Edit lengkap transaksi piutang (admin): Waktu, No Nota, No Anggota, Nominal
+function editPiutangAdmin(idPiutang, payload) {
+  try {
+    if (!idPiutang) return { status: 'error', msg: 'ID Transaksi tidak valid.' };
+    var p = payload || {};
+
+    var notaBaru = String(p.nota || '').replace(/^'/, '').trim();
+    if (notaBaru === '') return { status: 'error', msg: 'No Nota tidak boleh kosong.' };
+
+    var noA = _toNoAnggota(String(p.noAnggota || '').replace(/'/g, '').trim());
+    if (!noA) return { status: 'error', msg: 'No Anggota tidak boleh kosong.' };
+
+    var nilaiBaru = Number(p.nilai);
+    if (isNaN(nilaiBaru) || nilaiBaru < 0) return { status: 'error', msg: 'Nominal tidak valid.' };
+
+    var ss = SpreadsheetApp.getActive();
+    var sPi = ss.getSheetByName('Piutang');
+    if (!sPi) return { status: 'error', msg: 'Sheet Piutang tidak ditemukan.' };
+
+    var data = sPi.getDataRange().getValues();
+    if (data.length < 2) return { status: 'error', msg: 'Data piutang kosong.' };
+
+    var idUp = String(idPiutang).trim();
+    var found = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][1] || '').trim() === idUp) { found = i + 1; break; }
+    }
+    if (found === -1) return { status: 'error', msg: 'Transaksi piutang tidak ditemukan.' };
+
+    // Kolom: A(1)Waktu, C(3)Nota Toko, F(6)Nominal, G(7)No Anggota
+    var waktuIso = String(p.waktu || '').trim();
+    var dm = waktuIso.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (dm) {
+      var tgl = new Date(Number(dm[1]), Number(dm[2]) - 1, Number(dm[3]),
+        Number(dm[4] || 0), Number(dm[5] || 0), Number(dm[6] || 0), 0);
+      sPi.getRange(found, 1).setValue(tgl);
+    } else if (waktuIso !== '') {
+      return { status: 'error', msg: 'Format waktu tidak valid.' };
+    }
+
+    sPi.getRange(found, 3).setValue("'" + notaBaru);
+    sPi.getRange(found, 6).setValue(nilaiBaru);
+    sPi.getRange(found, 7).setValue("'" + noA);
+
+    _invalidateKreditCaches();
+    return { status: 'sukses', msg: 'Transaksi kredit berhasil diperbarui.' };
   } catch (e) {
     return { status: 'error', msg: 'Server Error: ' + e.toString() };
   }

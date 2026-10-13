@@ -4783,6 +4783,64 @@
         </div>
     </div>
 
+    <!-- MODAL EDIT TRANSAKSI KREDIT TOKO (ADMIN) -->
+    <div id="modal-edit-piutang-admin" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width:540px; text-align:left;">
+            <button class="close-btn" style="color:#c0392b !important; background:#f1f2f6 !important;"
+                onclick="tutupModal('modal-edit-piutang-admin')">&times;</button>
+            <h3 style="margin:0 0 18px 0; color:#c0392b; border-bottom:2px solid #c0392b; padding-bottom:12px; font-size:18px;">
+                <i class="bi bi-pencil-square"></i> Edit Transaksi Kredit Toko</h3>
+
+            <input type="hidden" id="ep-id">
+
+            <div class="form-group">
+                <label>Waktu Transaksi</label>
+                <input type="datetime-local" id="ep-waktu">
+            </div>
+
+            <div class="form-group">
+                <label>No Nota Toko</label>
+                <input type="text" id="ep-nota" placeholder="Contoh: TKST-001...">
+            </div>
+
+            <div class="form-group">
+                <label>Nominal (Rp)</label>
+                <input type="number" id="ep-nilai" min="0" placeholder="0">
+            </div>
+
+            <div class="form-group" style="position:relative;">
+                <label>Cari Nama / No Anggota Pelanggan</label>
+                <input type="text" id="ep-member-search" autocomplete="off"
+                    placeholder="Ketik nama atau no anggota..." oninput="editPiutangSearchMember()">
+                <div id="ep-member-results"
+                    style="display:none; position:absolute; left:0; right:0; top:100%; z-index:60; background:#fff; border:1px solid #dfe6e9; border-radius:8px; max-height:210px; overflow:auto; box-shadow:0 8px 24px rgba(0,0,0,0.12); margin-top:2px;"></div>
+            </div>
+
+            <div
+                style="display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#f8f9fa; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin-bottom:15px;">
+                <div>
+                    <label style="margin-bottom:4px;">No Anggota</label>
+                    <input type="text" id="ep-noanggota" readonly style="background:#eef2f7; font-weight:700;">
+                </div>
+                <div>
+                    <label style="margin-bottom:4px;">Nama Pelanggan</label>
+                    <input type="text" id="ep-nama" readonly style="background:#eef2f7; font-weight:700;">
+                </div>
+            </div>
+
+            <div style="font-size:11px; color:#7f8c8d; margin:-8px 0 16px 4px;">
+                <i class="bi bi-info-circle"></i> Nama pelanggan otomatis mengikuti No Anggota yang dipilih.
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button style="background:#95a5a6; padding:14px; width:40%; font-size:14px;"
+                    onclick="tutupModal('modal-edit-piutang-admin')">BATAL</button>
+                <button style="background:#c0392b; padding:14px; width:60%; font-size:14px;"
+                    onclick="simpanEditPiutangAdmin()"><i class="bi bi-save"></i> SIMPAN PERUBAHAN</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         // VARIABEL GLOBAL PUSAT
@@ -9177,6 +9235,7 @@
                         '<button class="btn-icon-sm" title="Kirim Pesan" onclick="kirimPesanModal(' + globalIdx + ')"><i class="bi bi-envelope-fill"></i></button>' :
                         '<button class="btn-icon-sm btn-icon-disabled" title="Tidak ada kontak" disabled style="opacity:0.35;cursor:not-allowed;"><i class="bi bi-envelope-fill"></i></button>';
                     var detailBtn = '<button class="btn-icon-sm" title="Lihat Detail" onclick="lihatDetailPiutangAdmin(' + globalIdx + ')"><i class="bi bi-eye-fill"></i></button>';
+                    var editBtn = '<button class="btn-icon-sm" title="Edit Transaksi" onclick="bukaEditPiutangAdmin(' + globalIdx + ')"><i class="bi bi-pencil-square"></i></button>';
 
                     var notif = (h.notif === 'Terkirim' || h.notif === 'Sudah Terkirim') ? 'Terkirim' : 'Belum';
                     var notifBadge = notif === 'Terkirim' ?
@@ -9193,7 +9252,7 @@
                         '<td style="font-family:monospace; font-size:11px;">' + (h.kodeVoucher || h.id || '-') + '</td>' +
                         '<td style="color:#e74c3c; font-weight:700;">Rp ' + (Number(h.nilai) || 0).toLocaleString('id-ID') + '</td>' +
                         '<td style="text-align:center;">' + notifBadge + '</td>' +
-                        '<td style="white-space:nowrap;">' + pesanBtn + ' ' + detailBtn + ' ' + notifTgl + '</td>' +
+                        '<td style="white-space:nowrap;">' + pesanBtn + ' ' + detailBtn + ' ' + editBtn + ' ' + notifTgl + '</td>' +
                         '</tr>';
                 });
             }
@@ -9277,6 +9336,118 @@
                 borderRadius: '20px',
                 showClass: { popup: 'animate__animated animate__fadeInUp animate__faster' },
                 hideClass: { popup: 'animate__animated animate__fadeOutDown animate__faster' }
+            });
+        }
+
+        // ===== EDIT TRANSAKSI KREDIT TOKO (ADMIN) =====
+        var _epMemberResults = [];
+        var _epSearchTimer = null;
+
+        function _epWaktuToInput(w) {
+            var m = String(w || '').match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+            if (!m) return '';
+            return m[3] + '-' + m[2] + '-' + m[1] + 'T' + (m[4] || '00') + ':' + (m[5] || '00');
+        }
+
+        function bukaEditPiutangAdmin(globalIdx) {
+            var h = filteredHutangAdmin[globalIdx];
+            if (!h) return Swal.fire('Error', 'Data transaksi tidak ditemukan.', 'error');
+            document.getElementById('ep-id').value = h.id || '';
+            document.getElementById('ep-waktu').value = _epWaktuToInput(h.waktu);
+            document.getElementById('ep-nota').value = String(h.nota || '').replace(/^'/, '');
+            document.getElementById('ep-nilai').value = Number(h.nilai) || 0;
+            document.getElementById('ep-noanggota').value = h.noAnggota || '';
+            document.getElementById('ep-nama').value = h.nama || '';
+            document.getElementById('ep-member-search').value = '';
+            var box = document.getElementById('ep-member-results');
+            if (box) { box.innerHTML = ''; box.style.display = 'none'; }
+            _epMemberResults = [];
+            var m = document.getElementById('modal-edit-piutang-admin');
+            if (!m) return;
+            m.classList.remove('hidden');
+            setTimeout(function () { m.classList.add('show'); }, 10);
+        }
+
+        function editPiutangSearchMember() {
+            var q = document.getElementById('ep-member-search').value.trim();
+            var box = document.getElementById('ep-member-results');
+            if (!box) return;
+            if (q.length < 2) { box.innerHTML = ''; box.style.display = 'none'; return; }
+            clearTimeout(_epSearchTimer);
+            _epSearchTimer = setTimeout(function () {
+                box.innerHTML = '<div style="padding:10px; color:#999; font-size:12px;"><i class="bi bi-hourglass-split"></i> Mencari...</div>';
+                box.style.display = 'block';
+                google.script.run.withSuccessHandler(function (res) {
+                    if (!res || res.status !== 'sukses' || !res.data || res.data.length === 0) {
+                        _epMemberResults = [];
+                        box.innerHTML = '<div style="padding:10px; color:#999; font-size:12px;">Tidak ada member ditemukan.</div>';
+                        box.style.display = 'block';
+                        return;
+                    }
+                    _epMemberResults = res.data;
+                    var html = '';
+                    res.data.forEach(function (mm, i) {
+                        var nm = String(mm.nama || '-').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        html += '<div onclick="editPiutangPilihMember(' + i + ')" style="padding:8px 10px; cursor:pointer; border-bottom:1px solid #f1f2f6; font-size:13px; color:#2c3e50;" onmouseover="this.style.background=\'#fff5f5\'" onmouseout="this.style.background=\'#fff\'">' +
+                            '<b>' + nm + '</b> <span style="color:#95a5a6; font-size:11px;">(' + String(mm.noAnggota || '-') + ' &middot; ' + String(mm.kelompok || '-') + ')</span></div>';
+                    });
+                    box.innerHTML = html;
+                    box.style.display = 'block';
+                }).withFailureHandler(function (err) {
+                    box.innerHTML = '<div style="padding:10px; color:#e74c3c; font-size:12px;">Error: ' + String(err) + '</div>';
+                    box.style.display = 'block';
+                }).cariMemberUntukPiutang(q);
+            }, 300);
+        }
+
+        function editPiutangPilihMember(idx) {
+            var mm = _epMemberResults[idx];
+            if (!mm) return;
+            document.getElementById('ep-noanggota').value = String(mm.noAnggota || '');
+            document.getElementById('ep-nama').value = String(mm.nama || '');
+            document.getElementById('ep-member-search').value = '';
+            var box = document.getElementById('ep-member-results');
+            if (box) { box.innerHTML = ''; box.style.display = 'none'; }
+        }
+
+        function simpanEditPiutangAdmin() {
+            var id = document.getElementById('ep-id').value;
+            var waktu = document.getElementById('ep-waktu').value;
+            var nota = document.getElementById('ep-nota').value.trim();
+            var nilai = document.getElementById('ep-nilai').value;
+            var noA = document.getElementById('ep-noanggota').value.trim();
+            if (!id) return Swal.fire('Gagal', 'ID transaksi tidak valid.', 'error');
+            if (!waktu) return Swal.fire('Perhatian', 'Waktu transaksi wajib diisi!', 'warning');
+            if (!nota) return Swal.fire('Perhatian', 'No Nota wajib diisi!', 'warning');
+            if (noA === '') return Swal.fire('Perhatian', 'Pilih pelanggan (No Anggota) terlebih dahulu!', 'warning');
+            if (nilai === '' || isNaN(Number(nilai)) || Number(nilai) < 0) return Swal.fire('Perhatian', 'Nominal tidak valid!', 'warning');
+            Swal.fire({
+                title: 'Simpan Perubahan?',
+                html: 'Transaksi <b>' + nota + '</b> akan diperbarui.<br>Pastikan data sudah benar.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Simpan',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#c0392b',
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(function (r) {
+                if (!r.isConfirmed) return;
+                showLoading('Menyimpan perubahan...');
+                google.script.run.withSuccessHandler(function (res) {
+                    hideLoading();
+                    if (res && res.status === 'sukses') {
+                        tutupModal('modal-edit-piutang-admin');
+                        Swal.fire('Berhasil', res.msg, 'success').then(function () {
+                            loadRekapHutangAdmin(true);
+                        });
+                    } else {
+                        Swal.fire('Gagal', (res && res.msg) ? res.msg : 'Terjadi kesalahan.', 'error');
+                    }
+                }).withFailureHandler(function (err) {
+                    hideLoading();
+                    Swal.fire('Error', String(err), 'error');
+                }).editPiutangAdmin(id, { waktu: waktu, nota: nota, noAnggota: noA, nilai: Number(nilai) });
             });
         }
 
