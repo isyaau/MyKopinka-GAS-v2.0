@@ -3474,6 +3474,8 @@
                 <button style="background:#17a2b8; width:auto; padding:8px 15px;" onclick="loadKasirRekap()"><i
                         class="bi bi-arrow-clockwise"></i> Refresh</button>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button style="background:#27ae60; width:auto; padding:8px 15px;" onclick="exportKasirRekapExcel()"><i
+                            class="bi bi-file-earmark-excel"></i> Export Excel</button>
                     <button style="background:#25D366; width:auto; padding:8px 15px;" onclick="kirimWaKasirAll()"><i
                             class="bi bi-whatsapp"></i> Kirim WA Semua</button>
                 </div>
@@ -10471,6 +10473,76 @@ var skel = '';
             safeSetText('krk-stat-toko-title', 'Transaksi ' + namaToko);
             safeSetText('krk-stat-trans-toko', 'Rp ' + totTrans.toLocaleString('id-ID'));
             safeSetText('krk-stat-jasa-toko', 'Rp ' + jasa.toLocaleString('id-ID'));
+        }
+
+        // Export Excel sesuai filter aktif (bulan/tahun + pencarian nama/no anggota + no nota)
+        function exportKasirRekapExcel() {
+            if (!kasirRekapFiltered || kasirRekapFiltered.length === 0) {
+                return Swal.fire('Info', 'Tidak ada data untuk di-export.', 'info');
+            }
+            var blnEl = document.getElementById('filter-kasir-rekap-bulan');
+            var thnEl = document.getElementById('filter-kasir-rekap-tahun');
+            var qEl = document.getElementById('search-kasir-rekap');
+            var qNotaEl = document.getElementById('search-kasir-rekap-nota');
+            var bln = blnEl ? blnEl.value : 'ALL';
+            var thn = thnEl ? thnEl.value : '';
+            var q = qEl ? qEl.value.trim() : '';
+            var qNota = qNotaEl ? qNotaEl.value.trim() : '';
+
+            var bulanNama = (bln && bln !== 'ALL') ? (namaBulan[parseInt(bln, 10)] || bln) : 'Semua Bulan';
+            var namaToko = (userToko && userToko.toko && userToko.toko !== '-') ? userToko.toko : ((userToko && userToko.kodeToko) ? userToko.kodeToko : 'Toko');
+
+            var d = [];
+            d.push(['REKAP KREDIT TOKO - ' + namaToko]);
+            d.push(['Periode: ' + bulanNama + (thn ? ' ' + thn : '')]);
+            if (q) d.push(['Filter Nama / No Anggota: ' + q]);
+            if (qNota) d.push(['Filter No Nota: ' + qNota]);
+            d.push(['Dicetak: ' + new Date().toLocaleString('id-ID')]);
+            d.push([]);
+            d.push(['No', 'Waktu', 'No Anggota', 'Nama Pelanggan', 'No Nota', 'Toko', 'Kode Transaksi', 'Petugas', 'Nominal', 'Dibayar', 'Sisa', 'Status', 'Notifikasi']);
+
+            var totNominal = 0, totDibayar = 0, totSisa = 0;
+            kasirRekapFiltered.forEach(function (h, i) {
+                var nilai = Number(h.nilai) || 0;
+                var dibayar = Number(h.dibayar) || 0;
+                var sisa = Number(h.sisa) || 0;
+                totNominal += nilai;
+                totDibayar += dibayar;
+                totSisa += sisa;
+                d.push([
+                    i + 1,
+                    h.waktu || '-',
+                    h.noAnggota || '-',
+                    h.nama || '-',
+                    String(h.nota || '-').replace(/^'/, ''),
+                    (h.toko && h.toko.trim() !== '') ? h.toko : (h.storeNama || '-'),
+                    h.kodeVoucher || h.id || '-',
+                    h.petugas || '-',
+                    nilai,
+                    dibayar,
+                    sisa,
+                    h.status || '-',
+                    h.notif || '-'
+                ]);
+            });
+
+            var jasa = Math.round(totNominal * 0.015);
+            d.push([]);
+            d.push(['', '', '', '', '', '', '', 'TOTAL', totNominal, totDibayar, totSisa, '', '']);
+            d.push([]);
+            d.push(['', '', '', '', '', '', '', 'Transaksi ' + namaToko, totNominal]);
+            d.push(['', '', '', '', '', '', '', 'Jasa (1,5%)', jasa]);
+            d.push(['', '', '', '', '', '', '', 'Total Tagihan Tertunda', totSisa + jasa]);
+
+            var ws = XLSX.utils.aoa_to_sheet(d);
+            ws['!cols'] = [
+                { wch: 5 }, { wch: 18 }, { wch: 12 }, { wch: 24 }, { wch: 16 }, { wch: 18 },
+                { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }
+            ];
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Rekap_Kredit_Kasir');
+            var bulanFile = bulanNama.replace(/\s/g, '_');
+            XLSX.writeFile(wb, 'Rekap_Kredit_Kasir_' + bulanFile + (thn ? '_' + thn : '') + '.xlsx');
         }
 
         function renderKasirRekapTable() {
