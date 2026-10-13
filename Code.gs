@@ -1280,6 +1280,8 @@ function getAdminDataUtama() {
       if (finalSt === 'active') { tA++; } 
       else if (finalSt === 'used') { tU++; } 
       else if (finalSt === 'expired') { tE++; }
+      else if (finalSt === 'diblokir' || finalSt === 'blocked') { tB++; }
+      else if (finalSt === 'belum aktif') { /* tidak masuk blocked */ }
       else { tB++; } 
       
       // Dikompres menjadi Array agar payload 60% lebih ringan
