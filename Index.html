@@ -3405,9 +3405,11 @@
 
             <div class="filter-container" style="background:#f9f9f9;">
                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap;">
-                    <input type="text" id="search-kasir-rekap" style="flex:2; min-width:150px;"
+                    <input type="text" id="search-kasir-rekap" style="flex:1.5; min-width:130px;"
                         placeholder="🔍 Cari Nama / No Anggota..." oninput="applyFilterKasirRekap()">
-                    <select id="filter-kasir-rekap-bulan" class="filter-select" style="flex:1; min-width:120px; max-width:150px;"
+                    <input type="text" id="search-kasir-rekap-nota" style="flex:1; min-width:100px;"
+                        placeholder="🔍 Cari No Nota..." oninput="applyFilterKasirRekap()">
+                    <select id="filter-kasir-rekap-bulan" class="filter-select" style="flex:1; min-width:100px; max-width:140px;"
                         onchange="applyFilterKasirRekap()">
                         <option value="ALL">Semua Bulan</option>
                         <option value="01">Januari</option>
@@ -3424,7 +3426,7 @@
                         <option value="12">Desember</option>
                     </select>
                     <input type="number" id="filter-kasir-rekap-tahun" class="filter-select" placeholder="Tahun"
-                        style="flex:1; min-width:85px; max-width:110px;" oninput="applyFilterKasirRekap()">
+                        style="flex:1; min-width:80px; max-width:100px;" oninput="applyFilterKasirRekap()">
                 </div>
             </div>
 
@@ -10023,7 +10025,8 @@ var skel = '';
         function fetchKasirRekapServer() {
             var bln = document.getElementById('filter-kasir-rekap-bulan') ? document.getElementById('filter-kasir-rekap-bulan').value : 'ALL';
             var thn = document.getElementById('filter-kasir-rekap-tahun') ? document.getElementById('filter-kasir-rekap-tahun').value : '';
-            var q = (document.getElementById('search-kasir-rekap') ? document.getElementById('search-kasir-rekap').value : '').toString().toLowerCase().trim();
+            var q   = (document.getElementById('search-kasir-rekap') ? document.getElementById('search-kasir-rekap').value : '').toString().toLowerCase().trim();
+            var qNota = (document.getElementById('search-kasir-rekap-nota') ? document.getElementById('search-kasir-rekap-nota').value : '').toString().toLowerCase().trim();
             var tokoFilter = (userToko && userToko.toko && userToko.toko !== '-') ? userToko.toko : ((userToko && userToko.kodeToko) ? userToko.kodeToko : '');
             showLoading("Memuat rekap kredit...");
             google.script.run.withSuccessHandler(function (res) {
@@ -10031,10 +10034,17 @@ var skel = '';
                 if (!res || res.status !== 'sukses' || !res.data) {
                     return Swal.fire('Error', 'Gagal memuat data rekap kredit.', 'error');
                 }
+                var dataAll = res.data;
+                _sortKasirRekap(dataAll);
+                if (qNota !== '') {
+                    dataAll = dataAll.filter(function (h) {
+                        var nota = String(h.nota || '').toLowerCase();
+                        return nota.indexOf(qNota) !== -1;
+                    });
+                }
                 kasirRekapData = res.data;
-                _sortKasirRekap(kasirRekapData);
+                kasirRekapFiltered = dataAll;
                 kasirRekapJasa = Number(res.totalBiayaJasa) || 0;
-                kasirRekapFiltered = kasirRekapData;
                 kasirRekapPage = 1;
                 renderKasirRekapStats();
                 renderKasirRekapTable();
@@ -10096,7 +10106,8 @@ var skel = '';
                         '<td>' + (h.petugas || '-') + '</td>' +
                         '<td style="text-align:right;">' + nilai.toLocaleString('id-ID') + '</td>' +
                         '<td>' + chipNotif + '</td>' +
-                        '<td style="text-align:center;">' +
+                        '<td style="text-align:center; white-space:nowrap;">' +
+                        '<button class="btn-page" style="background:#f59e0b; border-color:#f59e0b; color:#fff;" onclick="editNotaKasir(' + globalIdx + ')" title="Edit No Nota"><i class="bi bi-pencil-square"></i> Edit</button> ' +
                         '<button class="btn-page" style="background:#25D366; border-color:#25D366; color:#fff; white-space:nowrap;" onclick="kirimUlangWaKasir(' + globalIdx + ')"><i class="bi bi-whatsapp"></i> Kirim Ulang</button>' +
                         '</td>' +
                         '</tr>';
@@ -10225,6 +10236,54 @@ var skel = '';
             google.script.run.withSuccessHandler(function () { })
                 .withFailureHandler(function () { })
                 .markPiutangNotifBulk(ids, 'Terkirim');
+        }
+
+        function editNotaKasir(globalIdx) {
+            var h = (kasirRekapFiltered && kasirRekapFiltered[globalIdx]) || (kasirRekapData && kasirRekapData[globalIdx]);
+            if (!h) return Swal.fire('Error', 'Data tidak ditemukan.', 'error');
+            var current = String(h.nota || '').replace(/^'/, '');
+            Swal.fire({
+                title: 'Edit No Nota Toko',
+                html:
+                    '<div style="text-align:left; font-size:13px;">' +
+                    '<div><b>No Anggota:</b> ' + (h.noAnggota || '-') + ' - ' + (h.nama || '-') + '</div>' +
+                    '<div><b>Kode Transaksi:</b> ' + (h.id || '-') + '</div>' +
+                    '<div style="margin:10px 0;"><label>No Nota Saat Ini</label><input id="swal-nota-old" class="swal2-input" value="' + escapeHtml(current) + '" readonly></div>' +
+                    '<div><label>No Nota Baru</label><input id="swal-nota-new" class="swal2-input" placeholder="Masukkan No Nota baru" autocomplete="off"></div>' +
+                    '</div>',
+                showCancelButton: true,
+                confirmButtonText: 'Simpan',
+                cancelButtonText: 'Batal',
+                preConfirm: function () {
+                    var baru = document.getElementById('swal-nota-new').value.trim();
+                    if (baru === '') return Swal.showValidationMessage('No Nota baru wajib diisi');
+                    return { baru: baru };
+                }
+            }).then(function (res) {
+                if (res.isConfirmed) {
+                    var baru = res.value.baru;
+                    showLoading('Menyimpan perubahan...');
+                    google.script.run.withSuccessHandler(function (r) {
+                        hideLoading();
+                        if (r && r.status === 'sukses') {
+                            if (h.nota !== baru) h.nota = baru;
+                            renderKasirRekapTable();
+                            Swal.fire('Berhasil', r.msg || 'No Nota berhasil diperbarui.', 'success');
+                        } else {
+                            Swal.fire('Gagal', (r && r.msg) || 'Gagal menyimpan.', 'error');
+                        }
+                    }).withFailureHandler(function (err) {
+                        hideLoading();
+                        Swal.fire('Error', String(err), 'error');
+                    }).editNotaPiutangKasir(h.id, baru);
+                }
+            });
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, function (m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
         }
 
         // ==========================================

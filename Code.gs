@@ -2566,6 +2566,39 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q, tokoFilter) {
   }
 }
 
+function editNotaPiutangKasir(idPiutang, newNota) {
+  try {
+    if (!idPiutang) return { status: 'error', msg: 'ID Transaksi tidak valid.' };
+    var notaBaru = String(newNota || '').trim();
+    if (notaBaru === '') return { status: 'error', msg: 'No Nota tidak boleh kosong.' };
+
+    var ss = SpreadsheetApp.getActive();
+    var sPi = ss.getSheetByName('Piutang');
+    if (!sPi) return { status: 'error', msg: 'Sheet Piutang tidak ditemukan.' };
+
+    var data = sPi.getDataRange().getValues();
+    if (data.length < 2) return { status: 'error', msg: 'Data piutang kosong.' };
+
+    var idUp = String(idPiutang).trim();
+    var found = -1;
+    for (var i = 1; i < data.length; i++) {
+      var idRow = String(data[i][1] || '').trim(); // col B (ID System)
+      if (idRow === idUp) {
+        found = i + 1;
+        break;
+      }
+    }
+    if (found === -1) return { status: 'error', msg: 'Transaksi piutang tidak ditemukan.' };
+
+    // Update kolom C (index 2) = Nota Toko
+    sPi.getRange(found, 3).setValue("'" + notaBaru);
+    _invalidateKreditCaches();
+    return { status: 'sukses', msg: 'No Nota berhasil diperbarui.' };
+  } catch (e) {
+    return { status: 'error', msg: 'Server Error: ' + e.toString() };
+  }
+}
+
 // =====================================================
 // BIAYA JASA KREDIT TOKO (1,5% PER BULAN ATAS SISA BELUM LUNAS)
 // =====================================================
