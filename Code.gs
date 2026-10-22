@@ -16,7 +16,7 @@ var FOLDER_NOTIF_ID = "1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT";
 var FOLDER_KREDIT_TOKO_ID = "1zFKB6N4vjpJtnY1k_G6c1hutIhshLYyW";
 
 // Versi aplikasi terpusat (tampil di halaman login & header semua panel/role)
-var APP_VERSION = "2.4.0";
+var APP_VERSION = "2.4.1";
 function getAppVersion() { return APP_VERSION; }
 
 function doGet(e) {
@@ -1808,7 +1808,7 @@ function catatPiutangVoucher(kode, userToko, notaToko, base64Photo, fileName, no
     
     sPi.appendRow([timestamp, idPi, notaToko || '-', userToko ? userToko.nama : '-', userToko ? userToko.user : '-', valNum, "'" + dVoucher[vRow-1][1], fileId]);
     _invalidateKreditCaches();
-    return { status: 'sukses', nota: { toko: userToko.nama, waktu: timestamp, notaToko: notaToko, idSystem: idSys + " / " + idPi, kasir: userToko.user, kode: dVoucher[vRow-1][0], nama: dVoucher[vRow-1][2], noAnggota: dVoucher[vRow-1][1], kelompok: dVoucher[vRow-1][4], masaBerlaku: "Sesuai Detail", nilai: "Rp " + _formatRp(valNum) } };
+    return { status: 'sukses', nota: { toko: userToko.nama, waktu: timestamp, notaToko: notaToko, idSystem: idSys + " / " + idPi, kasir: userToko.user, kode: dVoucher[vRow-1][0], nama: dVoucher[vRow-1][2], noAnggota: dVoucher[vRow-1][1], kelompok: dVoucher[vRow-1][4], masaBerlaku: "Sesuai Detail", nilai: "Rp " + _formatRp(valNum), piutangId: idPi } };
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
@@ -2427,7 +2427,7 @@ function prosesVoucherPiutang(kode, userToko, notaToko, base64Photo, fileName, n
     sPi.appendRow([timestamp, idPi, notaToko || '-', userToko ? userToko.nama : '-', userToko ? userToko.user : '-', valNum, "'" + vData[1], fileId]);
     _invalidateKreditCaches();
 
-    return { status: 'sukses', nota: { toko: userToko.nama, waktu: timestamp, notaToko: notaToko, idSystem: idSys + " / " + idPi, kasir: userToko.user, kode: vData[0], nama: vData[2], noAnggota: vData[1], kelompok: vData[4], masaBerlaku: (startD ? Utilities.formatDate(startD, tz, "dd/MM/yyyy") : "-") + " s/d " + (ex ? Utilities.formatDate(ex, tz, "dd/MM/yyyy") : "-"), nilai: "Rp " + _formatRp(valNum) } };
+    return { status: 'sukses', nota: { toko: userToko.nama, waktu: timestamp, notaToko: notaToko, idSystem: idSys + " / " + idPi, kasir: userToko.user, kode: vData[0], nama: vData[2], noAnggota: vData[1], kelompok: vData[4], masaBerlaku: (startD ? Utilities.formatDate(startD, tz, "dd/MM/yyyy") : "-") + " s/d " + (ex ? Utilities.formatDate(ex, tz, "dd/MM/yyyy") : "-"), nilai: "Rp " + _formatRp(valNum), piutangId: idPi } };
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
@@ -2482,6 +2482,7 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q, tokoFilter) {
 
     // Header sheet Piutang: 0:Waktu, 1:ID System, 2:Nota Toko, 3:Toko, 4:Petugas, 5:Nominal, 6:No Anggota, 7:Verifikasi, 8:Status Notif
     // Alokasikan pembayaran akumulatif per anggota ke baris piutang berurutan (FIFO)
+    var notifCol = _statusNotifColIndex(dataPiutang);
     var allocRemain = {};
     for (var i = 1; i < dataPiutang.length; i++) {
       var row = dataPiutang[i];
@@ -2494,7 +2495,7 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q, tokoFilter) {
       var tglObj = _parseDate(tglRaw);
       var waktuStr = tglObj ? Utilities.formatDate(tglObj, tz, "dd/MM/yyyy HH:mm") : String(tglRaw);
 
-      var notif = String(row[8] || "").trim();
+      var notif = String(row[notifCol] || "").trim();
       if (notif === "") notif = "Belum";
 
       var used = Math.min(nilaiRow, allocRemain[nKey]);
@@ -3045,45 +3046,128 @@ function kirimEmailNotifHutang(dataKirim) {
   }
 }
 
+// =====================================================
+// STATUS NOTIFIKASI PIUTANG (kolom "Status Notif")
+// =====================================================
+
+// Normalisasi ID piutang: buang tanda kutip awal (format teks Sheets) + lowercase
+function _normPiutangId(v) {
+  return String(v === undefined || v === null ? '' : v).replace(/'/g, '').trim().toLowerCase();
+}
+
+// Cari index kolom "Status Notif" (0-based) pada data sheet Piutang.
+// Default kolom I (index 8) sesuai header: Waktu, ID System, Nota Toko, Toko,
+// Petugas, Nominal, No Anggota, Verifikasi, Status Notif
+function _statusNotifColIndex(dataArr) {
+  var fallback = 8; // kolom I
+  if (!dataArr || dataArr.length === 0) return fallback;
+  var hdr = dataArr[0] || [];
+  for (var c = 0; c < hdr.length; c++) {
+    var t = String(hdr[c] || '').trim().toLowerCase();
+    if (t === 'status notif' || t === 'status notifikasi' || t === 'status wa' || t === 'notifikasi') return c;
+  }
+  return fallback;
+}
+
+// Kandidat ID dari input (bisa "PIU-123" atau gabungan "TRX-123 / PIU-123")
+function _piutangIdCandidates(idRaw) {
+  var out = {};
+  var norm = _normPiutangId(idRaw);
+  if (!norm) return out;
+  out[norm] = true;
+  var re = /piu-[a-z0-9_-]+/g, m;
+  while ((m = re.exec(norm)) !== null) { if (m[0]) out[m[0]] = true; }
+  return out;
+}
+
+// Cocokkan token ID dengan batas karakter (agar "piu-12" tidak cocok "piu-12345678")
+function _idContainsToken(hay, token) {
+  if (!hay || !token) return false;
+  if (hay === token) return true;
+  var esc = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  try {
+    return new RegExp('(^|[^a-z0-9])' + esc + '($|[^a-z0-9])').test(hay);
+  } catch (e) { return hay.indexOf(token) !== -1; }
+}
+
+// Pastikan sheet Piutang punya kolom "Status Notif" yang siap pakai di posisi yang benar
+function _ensureStatusNotifHeader(sPi, dataArr) {
+  try {
+    var colIdx = _statusNotifColIndex(dataArr);
+    var headerVal = String((dataArr[0] || [])[colIdx] || '').trim();
+    if (headerVal) return colIdx;
+    // Header kosong -> pastikan kolom tersebut memang kosong seluruhnya agar aman dipakai
+    for (var i = 1; i < (dataArr || []).length; i++) {
+      if (String(dataArr[i][colIdx] || '').trim() !== '') return colIdx;
+    }
+    sPi.getRange(1, colIdx + 1).setValue('Status Notif');
+    return colIdx;
+  } catch (e) { return 8; }
+}
+
 function markPiutangNotif(idPiutang, status) {
   try {
     var statusFinal = (status === 'Terkirim' || status === 'Sudah Terkirim') ? 'Terkirim' : 'Belum';
+    if (!idPiutang) return { status: 'error', msg: 'ID transaksi piutang tidak valid.' };
     var sPi = _ensureKreditTokoSheet();
     var data = sPi.getDataRange().getValues();
-    var count = 0;
-    var target = String(idPiutang).trim().toLowerCase();
+    if (!data || data.length < 2) return { status: 'error', msg: 'Data piutang kosong.' };
+
+    var colIdx = _ensureStatusNotifHeader(sPi, data);
+    var cand = _piutangIdCandidates(idPiutang);
+    var rowsToMark = [];
     for (var i = 1; i < data.length; i++) {
-      var rowId = String(data[i][1] || "").trim().toLowerCase();
-      var match = (rowId === target) || (rowId.indexOf(" / " + target) !== -1) || (rowId.indexOf("/" + target) !== -1);
-      if (match) {
-        sPi.getRange(i + 1, 9).setValue(statusFinal);
-        count++;
+      var rowId = _normPiutangId(data[i][1]);
+      if (!rowId) continue;
+      var match = false;
+      for (var key in cand) {
+        if (!cand.hasOwnProperty(key)) continue;
+        if (_idContainsToken(rowId, key) || _idContainsToken(key, rowId)) { match = true; break; }
       }
+      if (match) rowsToMark.push(i + 1);
     }
-    if (count > 0) _invalidateKreditCaches();
-    return { status: count > 0 ? 'sukses' : 'error', msg: count > 0 ? 'Status notifikasi diperbarui.' : 'Transaksi tidak ditemukan.' };
+    if (rowsToMark.length === 0) {
+      return { status: 'error', msg: 'Transaksi piutang dengan ID "' + String(idPiutang).trim() + '" tidak ditemukan di sheet Piutang.' };
+    }
+    // Tulis sekaligus (lebih hemat API call daripada setValue per baris)
+    var vals = [];
+    for (var k = 0; k < rowsToMark.length; k++) vals.push([statusFinal]);
+    sPi.getRange(rowsToMark[0], colIdx + 1, rowsToMark.length, 1).setValues(vals);
+    _invalidateKreditCaches();
+    return { status: 'sukses', msg: 'Status notifikasi diperbarui (' + rowsToMark.length + ' transaksi).' };
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
 function markPiutangNotifBulk(ids, status) {
   try {
     var statusFinal = (status === 'Terkirim' || status === 'Sudah Terkirim') ? 'Terkirim' : 'Belum';
+    if (!ids || ids.length === 0) return { status: 'error', msg: 'Tidak ada transaksi yang dipilih.' };
     var sPi = _ensureKreditTokoSheet();
     var data = sPi.getDataRange().getValues();
+    if (!data || data.length < 2) return { status: 'error', msg: 'Data piutang kosong.' };
+    var colIdx = _ensureStatusNotifHeader(sPi, data);
     var set = {};
     for (var k = 0; k < ids.length; k++) {
-      set[String(ids[k]).trim().toLowerCase()] = true;
+      var cand = _piutangIdCandidates(ids[k]);
+      for (var ck in cand) { if (cand.hasOwnProperty(ck)) set[ck] = true; }
     }
-    var count = 0;
+    var rowsToMark = [];
     for (var i = 1; i < data.length; i++) {
-      var rowId = String(data[i][1] || "").trim().toLowerCase();
-      if (set[rowId]) {
-        sPi.getRange(i + 1, 9).setValue(statusFinal);
-        count++;
+      var rowId = _normPiutangId(data[i][1]);
+      if (!rowId) continue;
+      var match = false;
+      for (var key in set) {
+        if (!set.hasOwnProperty(key)) continue;
+        if (_idContainsToken(rowId, key) || _idContainsToken(key, rowId)) { match = true; break; }
       }
+      if (match) rowsToMark.push(i + 1);
     }
-    if (count > 0) _invalidateKreditCaches();
-    return { status: count > 0 ? 'sukses' : 'error', msg: count > 0 ? 'Status notifikasi (' + count + ') diperbarui.' : 'Tidak ada transaksi yang cocok.' };
+    if (rowsToMark.length === 0) return { status: 'error', msg: 'Tidak ada transaksi yang cocok.' };
+    var vals = [];
+    for (var v = 0; v < rowsToMark.length; v++) vals.push([statusFinal]);
+    sPi.getRange(rowsToMark[0], colIdx + 1, rowsToMark.length, 1).setValues(vals);
+    _invalidateKreditCaches();
+    return { status: 'sukses', msg: 'Status notifikasi (' + rowsToMark.length + ') diperbarui.' };
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 

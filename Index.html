@@ -10184,11 +10184,15 @@ var skel = '';
             }));
 
             var noWa = noHp ? noHp.replace(/^0+/, '62') : null;
+            var adaEmail = !!(email && email !== '' && email.indexOf('@') !== -1);
+
             if (noWa) {
                 window.open('https://wa.me/' + noWa + '?text=' + pesanWA, '_blank');
+                // WA sudah dikirim -> langsung tandai status notifikasi piutang = Terkirim
+                markNotifTerkirimStruk(data);
             }
 
-            if (email && email !== '' && email.indexOf('@') !== -1) {
+            if (adaEmail) {
                 var dataKirim = [{
                     noAnggota: data.noAnggota,
                     nama: data.nama,
@@ -10205,7 +10209,7 @@ var skel = '';
                 google.script.run.withSuccessHandler(function (res) {
                     hideLoading();
                     if (res.status === 'sukses') {
-                        markNotifTerkirimStruk(data);
+                        if (!noWa) markNotifTerkirimStruk(data);
                         Swal.close();
                         Swal.fire('Berhasil!', res.msg, 'success');
                     } else {
@@ -10222,18 +10226,88 @@ var skel = '';
                 if (!noWa) {
                     Swal.fire('Info', 'Tidak ada WA/Email yang tersedia untuk dikirim.', 'info');
                 } else {
-                    markNotifTerkirimStruk(data);
                     Swal.fire('Terkirim', 'Pesan WA berhasil dibuka di tab baru.', 'success');
                 }
             }
         }
 
+        // Ambil ID transaksi piutang yang tepat dari data struk
+        // Prioritas: piutangId (dikembalikan server) -> token PIU-xxx pada idSystem
+        function _extractPiutangIdStruk(data) {
+            if (!data) return '';
+            var pid = String(data.piutangId || '').trim();
+            if (pid) return pid;
+            var s = String(data.idSystem || '').trim();
+            if (!s) return '';
+            var m = s.match(/PIU-[A-Z0-9]+/i);
+            if (m) return m[0];
+            if (/^PIU-/i.test(s)) return s;
+            return '';
+        }
+
+        // Perbarui status notifikasi pada data lokal agar langsung tampil "Terkirim"
+        function _updateStatusNotifLokal(idTarget) {
+            if (!idTarget) return;
+            var key = String(idTarget).trim().toLowerCase();
+            var token = null;
+            var m = key.match(/piu-[a-z0-9]+/);
+            if (m) token = m[0];
+            function hit(h) {
+                if (!h || !h.id) return false;
+                var hid = String(h.id).trim().toLowerCase();
+                if (hid === key) return true;
+                if (token && hid.indexOf(token) !== -1) return true;
+                return false;
+            }
+            var changed = false;
+            [rawDataHutangAdmin, filteredHutangAdmin, kasirRekapData, kasirRekapFiltered].forEach(function (arr) {
+                if (!arr || !arr.length) return;
+                arr.forEach(function (h) {
+                    if (hit(h) && h.notif !== 'Terkirim') { h.notif = 'Terkirim'; changed = true; }
+                });
+            });
+            if (!changed) return;
+            try { renderTableKreditTokoAdmin(); } catch (e) { }
+            try { renderKasirRekapTable(); } catch (e) { }
+        }
+
+        // Muat ulang data rekap dari server (hanya tab yang sedang aktif)
+        function _refreshRekapSetelahNotif() {
+            try {
+                var vAdmin = document.getElementById('view-admin-rekap-kredit-toko');
+                if (vAdmin && !vAdmin.classList.contains('hidden')) loadRekapHutangAdmin(true);
+            } catch (e) { }
+            try {
+                var vKasir = document.getElementById('view-kasir-rekap-kredit');
+                if (vKasir && !vKasir.classList.contains('hidden')) fetchKasirRekapServer();
+            } catch (e) { }
+        }
+
         function markNotifTerkirimStruk(data) {
-            var s = data && (data.idSystem || '');
-            if (!s) return;
-            var matches = String(s).match(/PIU-?[\w-]*/i);
-            var piuId = matches ? matches[0] : s;
-            google.script.run.withSuccessHandler(function () { }).withFailureHandler(function () { }).markPiutangNotif(piuId, 'Terkirim');
+            var piuId = _extractPiutangIdStruk(data);
+            if (!piuId) return; // transaksi ini bukan pencatatan piutang (redeem biasa)
+            google.script.run.withSuccessHandler(function (res) {
+                if (res && res.status === 'sukses') {
+                    _updateStatusNotifLokal(piuId);
+                    _refreshRekapSetelahNotif();
+                } else {
+                    console.warn('Status notifikasi piutang gagal diperbarui:', res);
+                    Swal.fire({
+                        title: 'Status Notifikasi Belum Diperbarui',
+                        text: (res && res.msg) ? res.msg : 'Transaksi piutang tidak ditemukan di data.',
+                        icon: 'warning',
+                        confirmButtonText: 'Mengerti'
+                    });
+                }
+            }).withFailureHandler(function (err) {
+                console.warn('Status notifikasi piutang gagal diperbarui:', err);
+                Swal.fire({
+                    title: 'Status Notifikasi Belum Diperbarui',
+                    text: String(err),
+                    icon: 'warning',
+                    confirmButtonText: 'Mengerti'
+                });
+            }).markPiutangNotif(piuId, 'Terkirim');
         }
 
         function kirimPesanModal(globalIdx) {
