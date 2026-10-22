@@ -3,8 +3,8 @@ export default {
     const url = new URL(request.url);
     // URL deployment web app Google Apps Script.
     // DEV  : "Dev 2.0 MyKopinka" scriptId 1z-K6-dQD69OJTxVsL5yth-QLJG-Pzwe8euKcKu3u9q9UWmt1YKu_TtiE
-    //        deployment @14 (v2.4.2)
-    const APPS_SCRIPT_EXEC_URL = "https://script.google.com/macros/s/AKfycbyG2K6s7dxJCNyRlUsI27YOZTCuDncy4abehmVGgmw5oY1mO1kRUQQTlsPDc5v4Z2F1SA/exec";
+    //        deployment @15 (v2.4.3)
+    const APPS_SCRIPT_EXEC_URL = "https://script.google.com/macros/s/AKfycbwOO_4Q5fawx5zQW2W5Jm_0Ev15x9d_ZvvTed4JEw9ncfssqFXewfz6xc-6JQTsNoPDrA/exec";
 
     // Default route: serve the Apps Script iframe
     const mainAppHtml = `
