@@ -16,7 +16,7 @@ var FOLDER_NOTIF_ID = "1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT";
 var FOLDER_KREDIT_TOKO_ID = "1zFKB6N4vjpJtnY1k_G6c1hutIhshLYyW";
 
 // Versi aplikasi terpusat (tampil di halaman login & header semua panel/role)
-var APP_VERSION = "2.4.2";
+var APP_VERSION = "2.4.3";
 function getAppVersion() { return APP_VERSION; }
 
 function doGet(e) {
@@ -830,6 +830,27 @@ function uploadNotifExcel(dataArray) {
 // =====================================================
 // MANAJEMEN PENGGUNA (LOGIN & PROFIL)
 // =====================================================
+// Password disimpan sebagai TEKS dengan tanda ' (tick) di depan,
+// agar password yang diawali angka 0 tidak kehilangan nolnya saat disimpan di Sheet.
+// Contoh: 0123 -> tersimpan sebagai '0123 (tetap tampil 0123, tidak jadi 123)
+// Format di Sheet: tanda ' di depan + password asli (tepat 1 tick).
+function _normPass(v) {
+  return String(v === undefined || v === null ? '' : v).trim().replace(/^'/, '').trim();
+}
+function _simpanPass(v) {
+  var p = String(v === undefined || v === null ? '' : v).trim();
+  return p === '' ? '' : "'" + p;
+}
+// Cocokkan password tersimpan vs input yang diketik (toleran 1 tick di depan salah satu sisi)
+function _cocokPass(tersimpan, input) {
+  var s = String(tersimpan === undefined || tersimpan === null ? '' : tersimpan).trim();
+  var i = String(input === undefined || input === null ? '' : input).trim();
+  if (s === i) return true;
+  if (s.charAt(0) === "'" && s.substring(1) === i) return true;
+  if (i.charAt(0) === "'" && i.substring(1) === s) return true;
+  return false;
+}
+
 function loginUser(u, p) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_USERS);
@@ -843,7 +864,7 @@ function loginUser(u, p) {
       if (!rowU) continue;
       var sheetU = String(rowU).trim().toLowerCase();
       var sheetNoA = String(data[i][18] || '').replace(/'/g, '').trim().toLowerCase();
-      var sheetP = String(data[i][1]).trim();
+      var sheetP = data[i][1];
       var matchUser = (sheetU === inputU) || (sheetNoA !== '' && sheetNoA === inputU);
 
       if (!matchUser && inputU !== "") {
@@ -858,7 +879,7 @@ function loginUser(u, p) {
             return { status: 'error', msg: 'Akun Anda telah di-NONAKTIF-kan. Silakan hubungi Admin.' };
         }
 
-        if (sheetP === inputP) {
+        if (_cocokPass(sheetP, inputP)) {
           var role = String(data[i][3]||'Anggota');
           var kelompok = String(data[i][4]||'-').trim();
           var displayToko = kelompok;
@@ -963,7 +984,7 @@ function getAllUsersFull() {
   for (var i = 1; i < data.length; i++) {
     var r = data[i];
     users.push({ 
-      username: String(r[0]||''), pass: String(r[1]||''), nama: String(r[2]||''), role: String(r[3]||''), 
+      username: String(r[0]||''), pass: _normPass(r[1]), nama: String(r[2]||''), role: String(r[3]||''), 
       kelompok: String(r[4]||''), foto: String(r[5]||''), nip: String(r[6]||''), 
       tglMasuk: _formatTglIndo(r[7]), ktp: String(r[8]||''), email: String(r[9]||''), hp: String(r[10]||''), 
       rek: String(r[11]||''), namaBank: String(r[12]||''), atasNama: String(r[13]||''), 
@@ -1030,9 +1051,11 @@ function updateProfilMandiri(username, passLama, passBaru, fotoBase64, nip, ktp,
       if (String(data[i][0]).trim() === String(username).trim()) { rowIndex = i + 1; break; }
     }
     if (rowIndex === -1) return { status: 'error', msg: 'User tidak ditemukan.' };
-    if (String(data[rowIndex-1][1]).trim() !== String(passLama).trim()) return { status: 'error', msg: 'Password saat ini salah!' };
+    if (!_cocokPass(data[rowIndex-1][1], passLama)) return { status: 'error', msg: 'Password saat ini salah!' };
 
-    var finalPass = (passBaru && passBaru.trim() !== "") ? passBaru : data[rowIndex-1][1];
+    // Password baru disimpan sebagai TEKS (tanda ' di depan) agar angka 0 di depan tidak hilang.
+    // Bila tidak ada password baru, sel password TIDAK disentuh (nilai lama tetap utuh).
+    var passBaruBersih = String(passBaru || '').trim();
     var linkFoto = data[rowIndex-1][5]; 
 
     if (fotoBase64 && fotoBase64.length > 50) {
@@ -1041,7 +1064,7 @@ function updateProfilMandiri(username, passLama, passBaru, fotoBase64, nip, ktp,
       if (urlBaru) { deleteFileFromDrive(linkFoto); linkFoto = urlBaru; }
     }
 
-    sheet.getRange(rowIndex, 2).setValue(finalPass);
+    if (passBaruBersih !== '') sheet.getRange(rowIndex, 2).setValue(_simpanPass(passBaruBersih));
     sheet.getRange(rowIndex, 3).setValue(nama);
     sheet.getRange(rowIndex, 6).setValue(linkFoto);  
     sheet.getRange(rowIndex, 7).setValue("'" + nip);
@@ -1075,7 +1098,7 @@ function saveUserAdmin(mode, oldUsername, obj) {
     }
 
     var rowData = [ 
-      "'" + obj.username, obj.pass, obj.nama, obj.role, obj.kelompok, linkFotoBaru, 
+      "'" + obj.username, _simpanPass(obj.pass), obj.nama, obj.role, obj.kelompok, linkFotoBaru, 
       "'" + obj.nip, obj.tglMasuk, "'" + obj.ktp, obj.email, "'" + obj.hp, "'" + obj.rek, 
       obj.namaBank, obj.atasNama, obj.status, obj.jabatan, obj.alamatKtp, obj.alamatDomisili,
       "'" + (obj.noAnggota || ""), obj.tempatLahir || "-", obj.tglLahir || "-", obj.jk || "-", obj.kota || "-",
