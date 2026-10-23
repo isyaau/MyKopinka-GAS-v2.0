@@ -2397,7 +2397,7 @@
                     <div class="form-group">
                         <label>Nominal Piutang</label>
                         <input type="number" id="piutang-tab-nominal" placeholder="Masukkan nominal piutang"
-                            autocomplete="off">
+                            autocomplete="off" min="1" step="1" inputmode="numeric">
                     </div>
                     <div class="form-group" style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
                         <button class="btn-cek" onclick="startPiutangCameraTab()"><i class="bi bi-camera"></i> Buka
@@ -2473,7 +2473,8 @@
                     </div>
                     <div class="form-group">
                         <label>Nominal Piutang</label>
-                        <input type="number" id="piutang-nominal" placeholder="Masukkan nominal piutang">
+                        <input type="number" id="piutang-nominal" placeholder="Masukkan nominal piutang"
+                            min="1" step="1" inputmode="numeric">
                     </div>
                     <div style="margin-bottom:15px;">
                         <video id="piutang-video" autoplay playsinline muted
@@ -2525,7 +2526,8 @@
                 <div id="unified-nominal-row" class="form-group hidden">
                     <label>Nominal Piutang:</label>
                     <input type="number" id="nominal-redeem-piutang" placeholder="Masukkan nominal piutang..."
-                        style="border-color:#17a2b8; height:45px; font-weight:bold; font-size:16px;">
+                        style="border-color:#17a2b8; height:45px; font-weight:bold; font-size:16px;"
+                        min="1" step="1" inputmode="numeric">
                 </div>
 
                 <div id="unified-piutang-panel" class="hidden"
@@ -4897,7 +4899,7 @@
 
             <div class="form-group">
                 <label>Nominal (Rp)</label>
-                <input type="number" id="ep-nilai" min="0" placeholder="0">
+                <input type="number" id="ep-nilai" min="0" step="1" inputmode="numeric" placeholder="0">
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -6183,7 +6185,7 @@
                 var finalNom = 0;
                 if (piutangChecked) {
                     inlineNom = document.getElementById('nominal-redeem-piutang') ? document.getElementById('nominal-redeem-piutang').value.trim() : '';
-                    finalNom = Number(inlineNom) || 0;
+                    finalNom = Math.round(Number(inlineNom) || 0);
                     if (Number(v.sisaLimit) >= 0 && finalNom > Number(v.sisaLimit)) {
                         return Swal.fire('Limit Melampaui', 'Nominal piutang (Rp ' + finalNom.toLocaleString('id-ID') + ') melebihi sisa limit anggota (Rp ' + v.sisaLimit.toLocaleString('id-ID') + ')', 'error');
                     }
@@ -6211,7 +6213,7 @@
                     if (result.isConfirmed) {
                         showLoading("Memproses...");
                         if (piutangChecked) {
-                            google.script.run.withSuccessHandler(function (res) { hideLoading(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).catatPiutangVoucher(k, getKasirInfo(), n, unifiedPiutangPhoto, 'piu_' + v.kode + '_' + Date.now() + '.jpg', Number(inlineNom), _getWaktu('redeem-waktu'));
+                            google.script.run.withSuccessHandler(function (res) { hideLoading(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).catatPiutangVoucher(k, getKasirInfo(), n, unifiedPiutangPhoto, 'piu_' + v.kode + '_' + Date.now() + '.jpg', finalNom, _getWaktu('redeem-waktu'));
                         } else {
                             google.script.run.withSuccessHandler(function (res) { hideLoading(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else if (res.status == 'sudah_pakai_struk') { tampilkanStruk(res.nota, 'used_error'); Swal.fire('Perhatian', 'Voucher sudah diredeem sebelumnya!', 'warning'); } else { Swal.fire('Gagal', res.msg, 'error'); }                             }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).prosesVoucher(k, 'redeem', getKasirInfo(), n, _getWaktu('redeem-waktu'));
                         }
@@ -6448,14 +6450,15 @@
 
         function changePageMulti(dir) { multiPage += dir; renderMultiCards(); }
         function toggleVoucherMulti(cb) { var k = cb.value; if (cb.checked) { if (selectedVouchersMulti.indexOf(k) === -1) selectedVouchersMulti.push(k); } else { var i = selectedVouchersMulti.indexOf(k); if (i > -1) selectedVouchersMulti.splice(i, 1); } updateMultiCounter(); }
-        function updateMultiCounter() { safeSetText('multi-count', selectedVouchersMulti.length); var tot = 0; selectedVouchersMulti.forEach(function (k) { var v = rawMultiData.find(function (x) { return x.kode === k; }); if (v) tot += (Number(v.nilai) || 0); }); safeSetText('multi-total', "Rp " + tot.toLocaleString('id-ID')); var multiNom = document.getElementById('nominal-redeem-piutang'); var piutangChecked = document.getElementById('chk-piutang') && document.getElementById('chk-piutang').checked; if (multiNom && piutangChecked && (!multiNom.value || multiNom.value.trim() === '')) { multiNom.value = tot || ''; } }
+        function updateMultiCounter() { safeSetText('multi-count', selectedVouchersMulti.length); var tot = 0; selectedVouchersMulti.forEach(function (k) { var v = rawMultiData.find(function (x) { return x.kode === k; }); if (v) tot += (Number(v.nilai) || 0); }); safeSetText('multi-total', "Rp " + tot.toLocaleString('id-ID')); var multiNom = document.getElementById('nominal-redeem-piutang'); var piutangChecked = document.getElementById('chk-piutang') && document.getElementById('chk-piutang').checked; if (multiNom && piutangChecked && (!multiNom.value || multiNom.value.trim() === '')) { multiNom.value = Math.round(tot) || ''; } }
 
         function prosesRedeemMassal() {
             if (selectedVouchersMulti.length === 0) return Swal.fire('Perhatian', 'Centang minimal 1 voucher!', 'warning');
             var inp = document.getElementById('nota-toko').value.trim(); if (!inp) return Swal.fire('Perhatian', 'ISI NOTA KASIR!', 'warning'); if (!/^[0-9]{3,4}$/.test(inp)) return Swal.fire('Perhatian', 'Nota harus 3 atau 4 Digit Angka!', 'warning');
             var n = document.getElementById('prefix-nota').innerText + inp;
             var massNomEl = document.getElementById('nominal-redeem-piutang');
-            var massNomVal = (massNomEl && massNomEl.value && String(massNomEl.value).trim() !== '') ? Number(massNomEl.value) : null;
+            var massNomVal = (massNomEl && massNomEl.value && String(massNomEl.value).trim() !== '') ? Math.round(Number(massNomEl.value)) : null;
+            if (massNomVal !== null && (isNaN(massNomVal) || massNomVal <= 0)) massNomVal = null;
             var piutangChecked = document.getElementById('chk-piutang') && document.getElementById('chk-piutang').checked;
             if (piutangChecked && !massNomVal) {
                 return Swal.fire('Perhatian', 'Isi nominal piutang terlebih dahulu atau matikan checkbox piutang.', 'warning');
@@ -6819,7 +6822,8 @@
             if (!piutangVerifiedMember || piutangVerifiedMember.username !== noAnggota) return Swal.fire('Perhatian', 'Lakukan verifikasi anggota terlebih dahulu.', 'warning');
             if (!notaInput) return Swal.fire('Perhatian', 'Nomor nota penjualan wajib diisi.', 'warning');
             if (!/^[0-9]{3,4}$/.test(notaInput)) return Swal.fire('Perhatian', 'Nomor nota harus 3 atau 4 digit angka.', 'warning');
-            if (!nominal || isNaN(Number(nominal)) || Number(nominal) <= 0) return Swal.fire('Perhatian', 'Nominal piutang wajib diisi angka lebih dari 0.', 'warning');
+            var valNom = Math.round(Number(nominal));
+            if (!nominal || isNaN(valNom) || valNom <= 0) return Swal.fire('Perhatian', 'Nominal piutang wajib diisi angka lebih dari 0.', 'warning');
             // Foto verifikasi bersifat opsional
             var nota = document.getElementById('prefix-nota-piutang').innerText + notaInput;
 
@@ -6828,7 +6832,7 @@
                 '<p style="margin:4px 0;">Pelanggan: <b>' + piutangVerifiedMember.nama + ' (' + noAnggota + ')</b></p>' +
                 '<p style="margin:4px 0;">Nota Kasir: <b style="color:#e67e22;">' + nota + '</b></p>' +
                 '<p style="margin:4px 0;">Waktu: <b style="color:#8e44ad;">' + _fmtWaktuInput(_getWaktu('piutang-tab-waktu')) + '</b></p>' +
-                '<p style="margin:4px 0;">Nominal Piutang: <b style="color:#c0392b;">Rp ' + Number(nominal).toLocaleString('id-ID') + '</b></p>' +
+                '<p style="margin:4px 0;">Nominal Piutang: <b style="color:#c0392b;">Rp ' + valNom.toLocaleString('id-ID') + '</b></p>' +
                 (pendingPiutangPhoto ? '<p style="font-size:11px; color:#64748b; margin-top:5px;">* Foto verifikasi wajah telah dilampirkan.</p>' : '<p style="font-size:11px; color:#95a5a6; margin-top:5px;">* Tanpa foto verifikasi.</p>') +
                 '</div>';
 
@@ -6841,13 +6845,13 @@
                             clearPiutangTabForm();
                             tampilkanStruk(res.nota, 'new');
                         } else { Swal.fire('Gagal', res.msg, 'error'); }
-                    }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).addPiutangManual(noAnggota, nota, Number(nominal), getKasirInfo(), pendingPiutangPhoto, 'piutang_' + Date.now() + '.jpg', _getWaktu('piutang-tab-waktu'));
+                    }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).addPiutangManual(noAnggota, nota, valNom, getKasirInfo(), pendingPiutangPhoto, 'piutang_' + Date.now() + '.jpg', _getWaktu('piutang-tab-waktu'));
                 }
             });
         }
         function submitPiutangModal() {
             var nominal = document.getElementById('piutang-nominal').value.trim();
-            var valNom = Number(nominal);
+            var valNom = Math.round(Number(nominal));
             if (!nominal || isNaN(valNom) || valNom <= 0) return Swal.fire('Perhatian', 'Nominal piutang wajib diisi angka lebih dari 0.', 'warning');
 
             // Validasi Sisa Limit Modal Piutang
@@ -6871,16 +6875,16 @@
                     if (pendingPiutangMode === 'redeem') {
                         if (!pendingPiutangRedeemData) return Swal.fire('Perhatian', 'Data redeem tidak lengkap.', 'error');
                         showLoading('Memproses piutang redeem...');
-                        google.script.run.withSuccessHandler(function (res) { hideLoading(); closePiutangModal(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); closePiutangModal(); Swal.fire('Error', String(err), 'error'); }).prosesVoucherPiutang(pendingPiutangRedeemData.kode, getKasirInfo(), nota || pendingPiutangRedeemData.nota, pendingPiutangPhoto, 'piu_' + pendingPiutangRedeemData.kode + '_' + Date.now() + '.jpg', Number(nominal), _getWaktu('piutang-waktu'));
+                        google.script.run.withSuccessHandler(function (res) { hideLoading(); closePiutangModal(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); closePiutangModal(); Swal.fire('Error', String(err), 'error'); }).prosesVoucherPiutang(pendingPiutangRedeemData.kode, getKasirInfo(), nota || pendingPiutangRedeemData.nota, pendingPiutangPhoto, 'piu_' + pendingPiutangRedeemData.kode + '_' + Date.now() + '.jpg', valNom, _getWaktu('piutang-waktu'));
                     } else if (pendingPiutangMode === 'piutang_only') {
                         if (!pendingPiutangRedeemData) return Swal.fire('Perhatian', 'Data piutang tidak lengkap.', 'error');
                         showLoading('Mencatat piutang...');
-                        google.script.run.withSuccessHandler(function (res) { hideLoading(); closePiutangModal(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); closePiutangModal(); Swal.fire('Error', String(err), 'error'); }).catatPiutangVoucher(pendingPiutangRedeemData.kode, getKasirInfo(), nota || pendingPiutangRedeemData.nota, pendingPiutangPhoto, 'piu_' + pendingPiutangRedeemData.kode + '_' + Date.now() + '.jpg', Number(nominal), _getWaktu('piutang-waktu'));
+                        google.script.run.withSuccessHandler(function (res) { hideLoading(); closePiutangModal(); if (res.status == 'sukses') { tampilkanStruk(res.nota, 'new'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); closePiutangModal(); Swal.fire('Error', String(err), 'error'); }).catatPiutangVoucher(pendingPiutangRedeemData.kode, getKasirInfo(), nota || pendingPiutangRedeemData.nota, pendingPiutangPhoto, 'piu_' + pendingPiutangRedeemData.kode + '_' + Date.now() + '.jpg', valNom, _getWaktu('piutang-waktu'));
                     } else {
                         var noAnggota = document.getElementById('piutang-no-anggota').value.trim();
                         if (!noAnggota) return Swal.fire('Perhatian', 'No anggota wajib diisi untuk piutang baru.', 'warning');
                         showLoading('Menyimpan piutang...');
-                        google.script.run.withSuccessHandler(function (res) { hideLoading(); closePiutangModal(); if (res.status === 'sukses') { tampilkanStruk(res.nota, 'new'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); closePiutangModal(); Swal.fire('Error', String(err), 'error'); }).addPiutangManual(noAnggota, nota, Number(nominal), getKasirInfo(), pendingPiutangPhoto, 'piutang_' + Date.now() + '.jpg', _getWaktu('piutang-waktu'));
+                        google.script.run.withSuccessHandler(function (res) { hideLoading(); closePiutangModal(); if (res.status === 'sukses') { tampilkanStruk(res.nota, 'new'); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); closePiutangModal(); Swal.fire('Error', String(err), 'error'); }).addPiutangManual(noAnggota, nota, valNom, getKasirInfo(), pendingPiutangPhoto, 'piutang_' + Date.now() + '.jpg', _getWaktu('piutang-waktu'));
                     }
                 }
             });
@@ -9631,7 +9635,8 @@
             if (!waktu) return Swal.fire('Perhatian', 'Waktu transaksi wajib diisi!', 'warning');
             if (!nota) return Swal.fire('Perhatian', 'No Nota wajib diisi!', 'warning');
             if (noA === '') return Swal.fire('Perhatian', 'Pilih pelanggan (No Anggota) terlebih dahulu!', 'warning');
-            if (nilai === '' || isNaN(Number(nilai)) || Number(nilai) < 0) return Swal.fire('Perhatian', 'Nominal tidak valid!', 'warning');
+            var nilaiNum = Math.round(Number(nilai));
+            if (nilai === '' || isNaN(nilaiNum) || nilaiNum < 0) return Swal.fire('Perhatian', 'Nominal tidak valid!', 'warning');
             Swal.fire({
                 title: 'Simpan Perubahan?',
                 html: 'Transaksi <b>' + nota + '</b> akan diperbarui.<br>Pastikan data sudah benar.',
@@ -9689,7 +9694,7 @@
                     }
                     abortProsesSimpan();
                     Swal.fire('Error', String(err), 'error');
-                }).editPiutangAdmin(id, { waktu: waktu, nota: nota, noAnggota: noA, nilai: Number(nilai), toko: toko, petugas: petugas });
+                }).editPiutangAdmin(id, { waktu: waktu, nota: nota, noAnggota: noA, nilai: nilaiNum, toko: toko, petugas: petugas });
             });
         }
 

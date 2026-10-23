@@ -35,7 +35,8 @@ function include(filename) {
 // =====================================================
 function _formatRp(angka) {
   var num = Number(angka) || 0;
-  return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  // Bulatkan ke rupiah utuh agar nilai seperti 42499.99999999999 tampil 42.500
+  return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 function _parseDate(dateVal) {
@@ -280,7 +281,7 @@ function _getKreditTokoBulanIni(noAnggota) {
       if (rowAnggota === String(noAnggota).trim()) {
         var tgl = _parseDate(data[i][0]);
         if (tgl && tgl.getMonth() === curMonth && tgl.getFullYear() === curYear) {
-          total += (Number(data[i][5]) || 0);
+          total += Math.round(Number(data[i][5]) || 0);
         }
       }
     }
@@ -306,7 +307,7 @@ function _getMemberPaymentMap() {
     var data = s.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       var noAng = String(data[i][1] || "").replace(/'/g, "").trim().toLowerCase();
-      var jumlah = Number(data[i][2]) || 0;
+      var jumlah = Math.round(Number(data[i][2]) || 0);
       if (!noAng) continue;
       if (!map[noAng]) map[noAng] = 0;
       map[noAng] += jumlah;
@@ -335,7 +336,7 @@ function _getBatasKreditAnggota(noAnggota) {
       var tgl = _parseDate(data[i][0]);
       if (!tgl) continue;
       if (tgl.getTime() >= curMonthStart.getTime()) continue;
-      totalPiutang += Number(data[i][5]) || 0;
+      totalPiutang += Math.round(Number(data[i][5]) || 0);
     }
     outstanding = totalPiutang - totalDibayar;
     if (outstanding < 0) outstanding = 0;
@@ -364,7 +365,7 @@ function _getBatasKreditAllMembers(dataPiutangOpt) {
       if (!tgl) continue;
       if (tgl.getTime() < curMonthStart.getTime()) {
         if (!piutangLalu[q]) piutangLalu[q] = 0;
-        piutangLalu[q] += Number(data[i][5]) || 0;
+        piutangLalu[q] += Math.round(Number(data[i][5]) || 0);
       }
     }
   } catch (e) {}
@@ -404,7 +405,7 @@ function importPembayaranPiutang(dataArray) {
     for (var i = 1; i < dataPi.length; i++) {
       var nA = String(dataPi[i][6]).replace(/'/g, '').trim().toLowerCase();
       if (!nA) continue;
-      var nilai = Number(dataPi[i][5]) || 0;
+      var nilai = Math.round(Number(dataPi[i][5]) || 0);
       if (!piutangByMember[nA]) piutangByMember[nA] = { totalNilai: 0 };
       piutangByMember[nA].totalNilai += nilai;
     }
@@ -444,7 +445,7 @@ function importPembayaranPiutang(dataArray) {
       var tgl = String(row[0] || '').trim();
       var noAng = String(row[1] || '').trim();
       if (noAng.charAt(0) === "'") noAng = noAng.substring(1);
-      var jumlah = Number(String(row[2] || '').replace(/[^0-9\-\\.]/g, '')) || 0;
+      var jumlah = Math.round(Number(String(row[2] || '').replace(/[^0-9\-\\.]/g, '')) || 0);
       var nota = String(row[3] || '').trim() || '-';
       var metode = String(row[4] || '').trim() || '-';
 
@@ -505,7 +506,7 @@ function getOpsiPembayaranManual() {
       var nA = String(dataPi[i][6]).replace(/'/g, '').trim().toLowerCase();
       if (!nA) continue;
       if (!piutangByMember[nA]) piutangByMember[nA] = 0;
-      piutangByMember[nA] += Number(dataPi[i][5]) || 0;
+      piutangByMember[nA] += Math.round(Number(dataPi[i][5]) || 0);
     }
     var piutang = [];
     for (var key in piutangByMember) {
@@ -528,7 +529,7 @@ function simpanPembayaranManual(obj) {
     var p = obj || {};
     var tgl = String(p.tgl || '').trim();
     var noAng = String(p.noAnggota || '').trim();
-    var jumlah = Number(String(p.jumlah || '').replace(/[^0-9\-\\.]/g, '')) || 0;
+    var jumlah = Math.round(Number(String(p.jumlah || '').replace(/[^0-9\-\\.]/g, '')) || 0);
     var nota = String(p.nota || '').trim() || '-';
     var metode = String(p.metode || '').trim() || '-';
 
@@ -542,7 +543,7 @@ function simpanPembayaranManual(obj) {
     var totalPiutang = 0;
     for (var i = 1; i < dataPi.length; i++) {
       if (String(dataPi[i][6]).replace(/'/g, '').trim().toLowerCase() === noAng.toLowerCase()) {
-        totalPiutang += Number(dataPi[i][5]) || 0;
+        totalPiutang += Math.round(Number(dataPi[i][5]) || 0);
       }
     }
     if (totalPiutang <= 0) return { status: 'error', msg: 'Tidak ada piutang untuk anggota ' + noAng + '.' };
@@ -1753,7 +1754,7 @@ function redeemMassalPiutang(arrKode, userToko, notaToko, base64Photo, fileName,
             var isEarly = (startD && today < startD);
             
             if (st === 'active' && !isExp && !isEarly) {
-              var valNum = (massNominal !== undefined && massNominal !== null && String(massNominal).toString().trim() !== "") ? Number(massNominal) || 0 : Number(dVoucher[i][5]) || 0;
+              var valNum = (massNominal !== undefined && massNominal !== null && String(massNominal).toString().trim() !== "") ? Math.round(Number(massNominal) || 0) : Math.round(Number(dVoucher[i][5]) || 0);
               if (_isLimitKreditAktif()) {
                 var batasM = _getBatasKreditAnggota(dVoucher[i][1]);
                 var currentMemberDebt = _getKreditTokoBulanIni(dVoucher[i][1]);
@@ -1811,7 +1812,7 @@ function catatPiutangVoucher(kode, userToko, notaToko, base64Photo, fileName, no
     var timestamp = _resolveWaktu(waktuInput, tz);
     var idPi = 'PIU-' + new Date().getTime().toString().slice(-8);
     var idSys = 'TRX-' + (new Date().getTime() + 500).toString().slice(-8);
-    var valNum = Number(nominalOverride !== undefined && nominalOverride !== null ? nominalOverride : dVoucher[vRow-1][5]) || 0;
+    var valNum = Math.round(Number(nominalOverride !== undefined && nominalOverride !== null ? nominalOverride : dVoucher[vRow-1][5]) || 0);
     var fileId = '';
     if (base64Photo && base64Photo.length > 50) {
       var fn = fileName || ('piu_' + idPi + '.jpg');
@@ -1852,6 +1853,9 @@ function catatPiutangMassal(arrKode, userToko, notaToko, base64Photo, fileName, 
     }
     var kodes = []; var tNilai = 0; var vName = "-"; var vAngg = "-"; var vKel = "-";
     var sLaporan = ss.getSheetByName(SHEET_LAPORAN);
+    // Nominal override selalu dibulatkan ke rupiah utuh (hindari 42500 -> 42499.999...)
+    var massNominalNum = (massNominal !== undefined && massNominal !== null && String(massNominal).toString().trim() !== "")
+      ? Math.round(Number(massNominal) || 0) : null;
     
     // Ambil No Anggota dari voucher pertama untuk validasi limit total
     for (var i = 1; i < dVoucher.length; i++) {
@@ -1867,7 +1871,7 @@ function catatPiutangMassal(arrKode, userToko, notaToko, base64Photo, fileName, 
           return { status: 'error', msg: '❌ Kredit Toko diblokir: sisa tagihan bulan lalu (Rp ' + _formatRp(batasM.outstanding) + ') sudah mencapai limit. Segera bayar tagihan agar dapat kredit baru.' };
         }
         var hutangBulanIni = _getKreditTokoBulanIni(vAngg);
-        if (hutangBulanIni + Number(massNominal) > batasM.effective) {
+        if (hutangBulanIni + Number(massNominalNum || 0) > batasM.effective) {
             return { status: 'error', msg: 'Total piutang melebihi sisa limit anggota! Batas (limit global ' + _formatRp(batasM.global) + ' - sisa tagihan ' + _formatRp(batasM.outstanding) + '): Rp ' + _formatRp(batasM.effective) + '. Sisa: Rp ' + _formatRp(batasM.effective - hutangBulanIni) };
         }
     }
@@ -1881,10 +1885,9 @@ function catatPiutangMassal(arrKode, userToko, notaToko, base64Photo, fileName, 
       var targetKode = String(arrKode[k]).trim();
       for (var i = 1; i < dVoucher.length; i++) {
         if (String(dVoucher[i][0]).trim() === targetKode) {
-          var isOverride = (massNominal !== undefined && massNominal !== null && String(massNominal).toString().trim() !== "");
-          var valNum = isOverride ? (Number(massNominal) / arrKode.length) : (Number(dVoucher[i][5]) || 0);
-
-          tNilai += valNum;
+          var isOverride = (massNominalNum !== null);
+          var valNum = isOverride ? (massNominalNum / arrKode.length) : Math.round(Number(dVoucher[i][5]) || 0);
+          if (!isOverride) tNilai += valNum;
           kodes.push(dVoucher[i][0]);
           vName = dVoucher[i][2]; vAngg = dVoucher[i][1]; vKel = dVoucher[i][4];
 
@@ -1899,6 +1902,7 @@ function catatPiutangMassal(arrKode, userToko, notaToko, base64Photo, fileName, 
     }
     // Catat piutang massal satu baris
     if (kodes.length > 0) {
+      if (isOverride) tNilai = massNominalNum;
       sPi.appendRow([timestamp, idPi, notaToko || '-', userToko ? userToko.nama : '-', userToko ? userToko.user : '-', tNilai, "'" + vAngg, fileId]);
       _invalidateKreditCaches();
     }
@@ -2286,7 +2290,7 @@ function addPiutangManual(noAnggota, notaToko, nilai, userToko, base64Photo, fil
     var tz = Session.getScriptTimeZone();
     var waktu = _resolveWaktu(waktuInput, tz);
     var idSys = 'PIU-' + new Date().getTime().toString().slice(-8);
-    var valNum = Number(String(nilai).replace(/[^0-9\-\\.]/g,'')) || 0;
+    var valNum = Math.round(Number(String(nilai).replace(/[^0-9\-\\.]/g,'')) || 0);
 
     if (_isLimitKreditAktif()) {
       var batas = _getBatasKreditAnggota(noAnggota);
@@ -2348,7 +2352,7 @@ function importPiutangTagihanAdmin(dataArray) {
       var noAnggota = String(r[1] || '').replace(/'/g, '').replace(/[^0-9]/g, '').trim();
       if (!noAnggota) { skipped.push({ row: i + 1, reason: 'No Anggota kosong' }); continue; }
       if (!userMap[noAnggota]) { skipped.push({ row: i + 1, reason: 'Anggota ' + noAnggota + ' tidak ditemukan di Users' }); continue; }
-      var nilai = Number(String(r[2] || '').replace(/[^0-9\-\.]/g, '')) || 0;
+      var nilai = Math.round(Number(String(r[2] || '').replace(/[^0-9\-\.]/g, '')) || 0);
       if (nilai <= 0) { skipped.push({ row: i + 1, reason: 'Nilai <= 0 / tidak valid' }); continue; }
       var tglObj = _parseDate(String(r[0] || ''));
       if (!tglObj) { skipped.push({ row: i + 1, reason: 'Tanggal tidak valid (pakai dd/MM/yyyy)' }); continue; }
@@ -2378,7 +2382,7 @@ function getKreditTokoForMember(noAnggota) {
     var remaining = memberBayar[String(noAnggota).trim().toLowerCase()] || 0;
     for (var i = 1; i < data.length; i++) {
       if (String(data[i][6]).replace(/'/g,'').trim() === String(noAnggota).trim()) {
-        var nilai = Number(data[i][5]) || 0;
+        var nilai = Math.round(Number(data[i][5]) || 0);
         var idSys = String(data[i][1]);
         var used = Math.min(nilai, remaining);
         remaining -= used;
@@ -2416,7 +2420,7 @@ function prosesVoucherPiutang(kode, userToko, notaToko, base64Photo, fileName, n
     if (_isPiutangBlocked(noAnggota)) {
       return { status: 'error', msg: '❌ Anggota ' + noAnggota + ' (' + vData[2] + ') sedang diblokir untuk transaksi piutang.' };
     }
-    var valNum = Number(nominalOverride !== undefined && nominalOverride !== null ? nominalOverride : vData[5]) || 0;
+    var valNum = Math.round(Number(nominalOverride !== undefined && nominalOverride !== null ? nominalOverride : vData[5]) || 0);
     if (_isLimitKreditAktif()) {
       var batas = _getBatasKreditAnggota(noAnggota);
       var hutangBulanIni = _getKreditTokoBulanIni(noAnggota);
@@ -2511,7 +2515,7 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate, q, tokoFilter) {
       var row = dataPiutang[i];
       var noAnggota = String(row[6]).replace(/'/g, "").trim();
       var nKey = noAnggota.toLowerCase();
-      var nilaiRow = Number(row[5]) || 0;
+      var nilaiRow = Math.round(Number(row[5]) || 0);
       if (allocRemain[nKey] === undefined) allocRemain[nKey] = memberBayar[nKey] || 0;
 
       var tglRaw = row[0];
@@ -2669,7 +2673,7 @@ function editPiutangAdmin(idPiutang, payload) {
     var tokoBaru = String(p.toko || '').replace(/^'/, '').trim();
     var petugasBaru = String(p.petugas || '').replace(/^'/, '').trim();
 
-    var nilaiBaru = Number(p.nilai);
+    var nilaiBaru = Math.round(Number(p.nilai));
     if (isNaN(nilaiBaru) || nilaiBaru < 0) return { status: 'error', msg: 'Nominal tidak valid.' };
 
     var ss = SpreadsheetApp.getActive();
@@ -2731,7 +2735,7 @@ function hapusPiutangAdmin(idPiutang) {
         info = {
           nota: String(data[i][2] || '').replace(/^'/, ''),
           noAnggota: String(data[i][6] || '').replace(/'/g, '').trim(),
-          nilai: Number(data[i][5]) || 0
+          nilai: Math.round(Number(data[i][5]) || 0)
         };
         break;
       }
@@ -2770,7 +2774,7 @@ function _buildPiutangEvents(dataPiutang) {
     var row = dataPiutang[i];
     var noAng = String(row[6]).replace(/'/g, '').trim().toLowerCase();
     var tglObj = _parseDate(row[0]);
-    var nilai = Number(row[5]) || 0;
+    var nilai = Math.round(Number(row[5]) || 0);
     if (!noAng || !tglObj || nilai <= 0) continue;
     events.push({ noAng: noAng, t: tglObj.getTime(), val: nilai });
   }
@@ -2881,7 +2885,7 @@ function getRekapKreditPerAnggota(bulan, tahun) {
       var tglObj = _parseDate(row[0]);
       if (!tglObj) continue;
       if (!rowsByMember[noAnggota]) rowsByMember[noAnggota] = [];
-      rowsByMember[noAnggota].push({ tgl: tglObj, tglTime: tglObj.getTime(), nilai: Number(row[5]) || 0, nota: String(row[2] || ''), toko: String(row[3] || '') });
+      rowsByMember[noAnggota].push({ tgl: tglObj, tglTime: tglObj.getTime(), nilai: Math.round(Number(row[5]) || 0), nota: String(row[2] || ''), toko: String(row[3] || '') });
     }
 
     // Gabungan seluruh anggota (userMap) + anggota yang ada piutang tapi tidak
@@ -3014,7 +3018,7 @@ function getRekapPembayaran() {
       var nA = String(dataPi[i][6]).replace(/'/g, '').trim().toLowerCase();
       if (!nA) continue;
       if (!piutangByMember[nA]) piutangByMember[nA] = 0;
-      piutangByMember[nA] += Number(dataPi[i][5]) || 0;
+      piutangByMember[nA] += Math.round(Number(dataPi[i][5]) || 0);
     }
 
     // Total bayar per No Anggota
