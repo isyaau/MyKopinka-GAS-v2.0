@@ -4952,6 +4952,40 @@
         // ==========================================
         var LOGO_APP = "https://lh3.googleusercontent.com/d/1xtWHq8wx8aA9oioqNJoykLg2O_3Z2-6d";
 
+        // ==========================================
+        // ALERT SUKSES CRUD OTOMATIS MENUTUP
+        // Semua alert dengan ikon success dan judul Berhasil/Sukses
+        // akan tertutup sendiri tanpa harus klik tombol OK.
+        // ==========================================
+        (function () {
+            if (typeof Swal === 'undefined' || !Swal.fire) return;
+            var AUTO_CLOSE_MS = 2000;
+            var _swalFire = Swal.fire.bind(Swal);
+            Swal.fire = function () {
+                var args = Array.prototype.slice.call(arguments);
+                var opts = null;
+
+                if (args.length === 1 && args[0] && typeof args[0] === 'object') {
+                    opts = args[0];
+                } else if (args.length >= 3 && args[2] === 'success') {
+                    opts = { title: args[0], text: args[1], icon: 'success' };
+                    args = [opts];
+                }
+
+                if (opts && opts.icon === 'success') {
+                    var judul = String(opts.title || '').toUpperCase();
+                    var isCrudSuccess = judul.indexOf('BERHASIL') === 0 || judul.indexOf('SUKSES') === 0;
+                    // Alert validasi voucher tetap menunggu dibaca pengguna.
+                    if (isCrudSuccess && judul.indexOf('VOUCHER VALID') === -1) {
+                        if (opts.timer === undefined) opts.timer = AUTO_CLOSE_MS;
+                        if (opts.showConfirmButton === undefined) opts.showConfirmButton = false;
+                    }
+                }
+
+                return _swalFire.apply(Swal, args);
+            };
+        })();
+
         var userToko = {};
         var currentRole = 'Kasir';
         var currentAnggotaTab = 'anggota-voucher';
@@ -8093,7 +8127,7 @@
         function renderPotonganTable() { var tb = document.querySelector('#tabel-potongan tbody'); tb.innerHTML = ''; var tot = Math.ceil(filteredPotongan.length / 10) || 1; if (potPage > tot) potPage = tot; if (potPage < 1) potPage = 1; var start = (potPage - 1) * 10; var pagData = filteredPotongan.slice(start, start + 10); if (pagData.length === 0) { return tb.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Data Kosong.</td></tr>'; } pagData.forEach(function (p) { var strBulan = namaBulan[parseInt(p.bulan, 10)] || p.bulan; tb.innerHTML += '<tr><td><b>' + p.noAnggota + '</b></td><td>' + p.tahun + '</td><td>' + strBulan + '</td><td><b style="color:#e74c3c;">Rp ' + (p.total || 0).toLocaleString('id-ID') + '</b></td><td><button style="background:#3498db; padding:6px; font-size:11px; width:auto;" onclick="previewSlipAdmin(\'' + p.noAnggota + '\', \'' + p.bulan + '\', \'' + p.tahun + '\')"><i class="bi bi-file-earmark-text"></i> Slip</button> <button style="background:#f39c12; padding:6px; font-size:11px; width:auto;" onclick="bukaModalPotongan(\'edit\', ' + p.rowIdx + ')"><i class="bi bi-pencil-square"></i> Edit</button> <button style="background:#e74c3c; padding:6px; font-size:11px; width:auto;" onclick="hapusPotonganAdmin(' + p.rowIdx + ')"><i class="bi bi-trash"></i> Hapus</button></td></tr>'; }); safeSetText('page-info-pot', 'Hal ' + potPage + ' / ' + tot); document.getElementById('btn-prev-pot').disabled = (potPage === 1); document.getElementById('btn-next-pot').disabled = (potPage === tot); }
         function prosesImportExcel() { var fi = document.getElementById('file-excel-potongan'); var f = fi.files[0]; if (!f) return Swal.fire('Peringatan', 'Pilih file Excel terlebih dahulu!', 'warning'); showLoading("Membaca Excel..."); var r = new FileReader(); r.onload = function (e) { try { var d = new Uint8Array(e.target.result); var wb = XLSX.read(d, { type: 'array' }); var exData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "" }); if (exData.length < 2) throw new Error("File kosong."); showLoading("Menyimpan ke Database..."); google.script.run.withSuccessHandler(function (res) { hideLoading(); if (res.status === 'sukses') { Swal.fire('Berhasil', res.msg, 'success'); fi.value = ""; loadPotonganAdmin(); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', err, 'error'); }).uploadPotonganGaji(exData); } catch (err) { hideLoading(); Swal.fire('Error', err.message, 'error'); } }; r.readAsArrayBuffer(f); }
         function hapusPotonganAdmin(rowIdx) { Swal.fire({ title: 'Hapus Data?', text: 'Yakin menghapus baris data ini?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then(function (r) { if (r.isConfirmed) { showLoading("Menghapus..."); google.script.run.withSuccessHandler(function () { hideLoading(); loadPotonganAdmin(); }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).deletePotonganSingle(rowIdx); } }); }
-        function hapusPotonganMassalUI() { var bln = document.getElementById('filter-pot-bulan').value; var thn = document.getElementById('filter-pot-tahun').value; if (!bln || !thn) return Swal.fire('Peringatan', 'Pilih Bulan dan Tahun di filter pencarian terlebih dahulu!', 'warning'); Swal.fire({ title: 'Hapus Massal?', text: 'YAKIN HAPUS SELURUH DATA GAJI BULAN ' + namaBulan[parseInt(bln, 10)].toUpperCase() + ' TAHUN ' + thn + '?', icon: 'error', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus Semua!' }).then(function (result) { if (result.isConfirmed) { showLoading("Menghapus Massal..."); google.script.run.withSuccessHandler(function (res) { hideLoading(); Swal.fire('Informasi', res.msg, 'info'); loadPotonganAdmin(); }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).deletePotonganMassal(bln, thn); } }); }
+        function hapusPotonganMassalUI() { var bln = document.getElementById('filter-pot-bulan').value; var thn = document.getElementById('filter-pot-tahun').value; if (!bln || !thn) return Swal.fire('Peringatan', 'Pilih Bulan dan Tahun di filter pencarian terlebih dahulu!', 'warning'); Swal.fire({ title: 'Hapus Massal?', text: 'YAKIN HAPUS SELURUH DATA GAJI BULAN ' + namaBulan[parseInt(bln, 10)].toUpperCase() + ' TAHUN ' + thn + '?', icon: 'error', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus Semua!' }).then(function (result) { if (result.isConfirmed) { showLoading("Menghapus Massal..."); google.script.run.withSuccessHandler(function (res) { hideLoading(); Swal.fire('Berhasil', res.msg, 'success'); loadPotonganAdmin(); }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).deletePotonganMassal(bln, thn); } }); }
         function bukaModalPotongan(mode, rowIdx) { if (mode === 'add') { document.getElementById('p-row-idx').value = 0; for (var i = 0; i < 38; i++) { var el = document.getElementById('pot-input-' + i); if (el) el.value = ""; } } else { document.getElementById('p-row-idx').value = rowIdx; var data = allPotonganData.find(function (x) { return x.rowIdx === rowIdx; }); if (data && data.d) { for (var i = 0; i < 38; i++) { var el = document.getElementById('pot-input-' + i); if (el) el.value = data.d[i] === undefined ? "" : data.d[i]; } } } var m = document.getElementById('modal-crud-potongan'); m.classList.remove('hidden'); setTimeout(function () { m.classList.add('show'); }, 10); }
         function simpanPotonganAdmin() { var rI = parseInt(document.getElementById('p-row-idx').value, 10) || 0; var arr = []; for (var i = 0; i < 38; i++) { var val = document.getElementById('pot-input-' + i); arr.push(val ? val.value : ""); } if (String(arr[0]).trim() === "") return Swal.fire('Peringatan', 'Nomor Anggota wajib diisi!', 'warning'); tutupModal('modal-crud-potongan'); showLoading("Menyimpan..."); google.script.run.withSuccessHandler(function (res) { hideLoading(); if (res.status === 'sukses') { Swal.fire('Berhasil', res.msg, 'success'); loadPotonganAdmin(); } else { Swal.fire('Gagal', res.msg, 'error'); } }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).savePotonganManual(rI, arr); }
         function changePagePot(dir) { potPage += dir; renderPotonganTable(); }
