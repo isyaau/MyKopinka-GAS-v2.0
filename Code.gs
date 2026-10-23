@@ -16,7 +16,7 @@ var FOLDER_NOTIF_ID = "1UmdX6k_bTjAq6Ag9x8YCE2E-cUF1KxdT";
 var FOLDER_KREDIT_TOKO_ID = "1zFKB6N4vjpJtnY1k_G6c1hutIhshLYyW";
 
 // Versi aplikasi terpusat (tampil di halaman login & header semua panel/role)
-var APP_VERSION = "2.4.4";
+var APP_VERSION = "2.4.5";
 function getAppVersion() { return APP_VERSION; }
 
 function doGet(e) {
@@ -2705,6 +2705,44 @@ function editPiutangAdmin(idPiutang, payload) {
 
     _invalidateKreditCaches();
     return { status: 'sukses', msg: 'Transaksi kredit berhasil diperbarui.' };
+  } catch (e) {
+    return { status: 'error', msg: 'Server Error: ' + e.toString() };
+  }
+}
+
+// Hapus transaksi piutang (kredit toko) berdasarkan ID System
+function hapusPiutangAdmin(idPiutang) {
+  try {
+    if (!idPiutang) return { status: 'error', msg: 'ID Transaksi tidak valid.' };
+
+    var ss = SpreadsheetApp.getActive();
+    var sPi = ss.getSheetByName(SHEET_KREDIT_TOKO);
+    if (!sPi) return { status: 'error', msg: 'Sheet Piutang tidak ditemukan.' };
+
+    var data = sPi.getDataRange().getValues();
+    if (data.length < 2) return { status: 'error', msg: 'Data piutang kosong.' };
+
+    var idUp = String(idPiutang).trim();
+    var found = -1;
+    var info = null;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][1] || '').trim() === idUp) {
+        found = i + 1;
+        info = {
+          nota: String(data[i][2] || '').replace(/^'/, ''),
+          noAnggota: String(data[i][6] || '').replace(/'/g, '').trim(),
+          nilai: Number(data[i][5]) || 0
+        };
+        break;
+      }
+    }
+    if (found === -1) return { status: 'error', msg: 'Transaksi piutang tidak ditemukan.' };
+
+    sPi.deleteRow(found);
+    _invalidateKreditCaches();
+
+    var label = (info && info.nota) ? info.nota : idUp;
+    return { status: 'sukses', msg: 'Transaksi ' + label + ' berhasil dihapus.', data: info };
   } catch (e) {
     return { status: 'error', msg: 'Server Error: ' + e.toString() };
   }

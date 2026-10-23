@@ -1020,6 +1020,93 @@
             }
         }
 
+        /* ===== Proses simpan / hapus transaksi (Swal) ===== */
+        .swal-proses-popup {
+            border-radius: 18px !important;
+            padding: 26px 24px 22px !important;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22) !important;
+        }
+
+        .swal-proses-popup .swal2-title {
+            font-size: 18px !important;
+            color: #2c3e50 !important;
+            padding: 0 0 4px 0 !important;
+        }
+
+        .proses-wrap {
+            text-align: left;
+            margin-top: 8px;
+        }
+
+        .proses-sub {
+            font-size: 12.5px;
+            color: #7f8c8d;
+            line-height: 1.55;
+            margin-bottom: 14px;
+        }
+
+        .proses-sub b {
+            color: #2c3e50;
+        }
+
+        .proses-bar {
+            height: 8px;
+            background: #eef1f5;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .proses-bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #c0392b, #e74c3c, #f0a04b, #e74c3c);
+            background-size: 220% 100%;
+            animation: prosesShimmer 1.6s linear infinite;
+            transition: width 0.45s ease;
+        }
+
+        .proses-step {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 12.5px;
+            color: #b2bec3;
+            padding: 4px 0;
+            transition: color 0.25s ease;
+        }
+
+        .proses-step i {
+            font-size: 14px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .proses-step.active {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .proses-step.done {
+            color: #27ae60;
+        }
+
+        .proses-spin {
+            display: inline-block;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes prosesShimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 220% 50%;
+            }
+        }
+
         .v-card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -4852,7 +4939,7 @@
                 <button style="background:#95a5a6; padding:14px; width:40%; font-size:14px;"
                     onclick="tutupModal('modal-edit-piutang-admin')">BATAL</button>
                 <button style="background:#c0392b; padding:14px; width:60%; font-size:14px;"
-                    onclick="simpanEditPiutangAdmin()"><i class="bi bi-save"></i> SIMPAN PERUBAHAN</button>
+                    id="ep-btn-simpan" onclick="simpanEditPiutangAdmin()"><i class="bi bi-save"></i> SIMPAN PERUBAHAN</button>
             </div>
         </div>
     </div>
@@ -5311,6 +5398,89 @@
 
         function hideLoading() {
             document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        // ===== Proses simpan/hapus transaksi yang informatif (Swal) =====
+        var _prosesTimers = [];
+
+        function _prosesClearTimers() {
+            _prosesTimers.forEach(function (t) { clearTimeout(t); });
+            _prosesTimers = [];
+        }
+
+        function _setProsesBar(pct) {
+            var el = document.getElementById('proses-bar-fill');
+            if (el) el.style.width = pct + '%';
+        }
+
+        function _markProsesStep(idx, mode) {
+            var el = document.getElementById('proses-step-' + idx);
+            if (!el) return;
+            el.classList.remove('active', 'done');
+            if (mode) el.classList.add(mode);
+            var ic = el.querySelector('i');
+            if (ic) {
+                ic.className = 'bi ' + (mode === 'done' ? 'bi-check-circle-fill'
+                    : (mode === 'active' ? 'bi-arrow-repeat proses-spin' : 'bi-circle'));
+            }
+        }
+
+        function showProsesSimpan(cfg) {
+            cfg = cfg || {};
+            _prosesClearTimers();
+            var steps = cfg.steps || ['Memvalidasi data', 'Menyimpan ke server', 'Memperbarui tampilan'];
+            var stepHtml = '';
+            steps.forEach(function (s, i) {
+                stepHtml += '<div class="proses-step" id="proses-step-' + i + '">' +
+                    '<i class="bi bi-circle"></i><span>' + s + '</span></div>';
+            });
+            Swal.fire({
+                title: cfg.title || 'Menyimpan Perubahan',
+                html: '<div class="proses-wrap">' +
+                    (cfg.subtitle ? '<div class="proses-sub">' + cfg.subtitle + '</div>' : '') +
+                    '<div class="proses-bar"><div class="proses-bar-fill" id="proses-bar-fill"></div></div>' +
+                    stepHtml +
+                    '</div>',
+                showConfirmButton: false,
+                showCloseButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                customClass: { popup: 'swal-proses-popup' },
+                didOpen: function () {
+                    _setProsesBar(12);
+                    _prosesTimers.push(setTimeout(function () {
+                        _markProsesStep(0, 'done');
+                        _markProsesStep(1, 'active');
+                        _setProsesBar(48);
+                    }, 320));
+                    _prosesTimers.push(setTimeout(function () {
+                        _markProsesStep(1, 'done');
+                        _markProsesStep(2, 'active');
+                        _setProsesBar(82);
+                    }, 1150));
+                    _prosesTimers.push(setTimeout(function () {
+                        _setProsesBar(92);
+                    }, 2600));
+                }
+            });
+        }
+
+        function finishProsesSimpan() {
+            _prosesClearTimers();
+            var total = document.querySelectorAll('.proses-step').length;
+            for (var i = 0; i < total; i++) _markProsesStep(i, 'done');
+            _setProsesBar(100);
+            return new Promise(function (resolve) {
+                setTimeout(function () {
+                    Swal.close();
+                    resolve();
+                }, 420);
+            });
+        }
+
+        function abortProsesSimpan() {
+            _prosesClearTimers();
+            Swal.close();
         }
 
         function tutupModal(id) {
@@ -9359,6 +9529,7 @@
         var _epMemberResults = [];
         var _epSearchTimer = null;
         var _epSource = 'admin';
+        var _epSaving = false;
 
         function _epWaktuToInput(w) {
             var m = String(w || '').match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
@@ -9447,6 +9618,7 @@
         }
 
         function simpanEditPiutangAdmin() {
+            if (_epSaving) return;
             var src = _epSource;
             var id = document.getElementById('ep-id').value;
             var waktu = document.getElementById('ep-waktu').value;
@@ -9472,20 +9644,50 @@
                 allowEscapeKey: false
             }).then(function (r) {
                 if (!r.isConfirmed) return;
-                showLoading('Menyimpan perubahan...');
+                _epSaving = true;
+                var btnSimpan = document.getElementById('ep-btn-simpan');
+                if (btnSimpan) {
+                    btnSimpan.disabled = true;
+                    btnSimpan.style.opacity = '0.75';
+                }
+                showProsesSimpan({
+                    title: 'Menyimpan Perubahan',
+                    subtitle: 'Memperbarui transaksi <b>' + escapeHtml(nota) + '</b> untuk <b>' +
+                        escapeHtml(document.getElementById('ep-nama').value || noA) + '</b>.',
+                    steps: ['Memvalidasi data transaksi', 'Menyimpan perubahan ke database', 'Memperbarui rekap kredit']
+                });
                 google.script.run.withSuccessHandler(function (res) {
-                    hideLoading();
+                    _epSaving = false;
+                    if (btnSimpan) {
+                        btnSimpan.disabled = false;
+                        btnSimpan.style.opacity = '';
+                    }
                     if (res && res.status === 'sukses') {
                         tutupModal('modal-edit-piutang-admin');
-                        Swal.fire('Berhasil', res.msg, 'success').then(function () {
-                            if (src === 'kasir') { fetchKasirRekapServer(); }
-                            else { loadRekapHutangAdmin(true); }
+                        finishProsesSimpan().then(function () {
+                            Swal.fire({
+                                title: 'Berhasil Disimpan',
+                                html: '<div style="font-size:13px; line-height:1.6;">' +
+                                    escapeHtml(res.msg || 'Transaksi kredit berhasil diperbarui.') + '</div>',
+                                icon: 'success',
+                                confirmButtonText: 'Selesai',
+                                confirmButtonColor: '#27ae60'
+                            }).then(function () {
+                                if (src === 'kasir') { fetchKasirRekapServer(); }
+                                else { loadRekapHutangAdmin(true); }
+                            });
                         });
                     } else {
+                        abortProsesSimpan();
                         Swal.fire('Gagal', (res && res.msg) ? res.msg : 'Terjadi kesalahan.', 'error');
                     }
                 }).withFailureHandler(function (err) {
-                    hideLoading();
+                    _epSaving = false;
+                    if (btnSimpan) {
+                        btnSimpan.disabled = false;
+                        btnSimpan.style.opacity = '';
+                    }
+                    abortProsesSimpan();
                     Swal.fire('Error', String(err), 'error');
                 }).editPiutangAdmin(id, { waktu: waktu, nota: nota, noAnggota: noA, nilai: Number(nilai), toko: toko, petugas: petugas });
             });
@@ -10669,7 +10871,8 @@ var skel = '';
                         '<td>' + chipNotif + '</td>' +
                         '<td style="text-align:center; white-space:nowrap;">' +
                         '<button class="btn-page" style="background:#f59e0b; border-color:#f59e0b; color:#fff;" onclick="bukaEditPiutangKasir(' + globalIdx + ')" title="Edit Transaksi"><i class="bi bi-pencil-square"></i> Edit</button> ' +
-                        '<button class="btn-page" style="background:#25D366; border-color:#25D366; color:#fff; white-space:nowrap;" onclick="kirimUlangWaKasir(' + globalIdx + ')"><i class="bi bi-whatsapp"></i> Kirim Ulang</button>' +
+                        '<button class="btn-page" style="background:#25D366; border-color:#25D366; color:#fff; white-space:nowrap;" onclick="kirimUlangWaKasir(' + globalIdx + ')"><i class="bi bi-whatsapp"></i> Kirim Ulang</button> ' +
+                        '<button class="btn-page" style="background:#e74c3c; border-color:#e74c3c; color:#fff; white-space:nowrap;" onclick="hapusPiutangKasir(' + globalIdx + ')" title="Hapus Transaksi"><i class="bi bi-trash3"></i> Hapus</button>' +
                         '</td>' +
                         '</tr>';
                 });
@@ -10716,6 +10919,73 @@ var skel = '';
             window.open('https://wa.me/' + h.noHp.replace(/^0+/, '62') + '?text=' + pesan, '_blank');
             markPiutangNotifKasir([h.id]);
             Swal.fire('Terkirim', 'Membuka tautan WA untuk ' + h.nama + '. Periksa tab browser Anda.', 'success');
+        }
+
+        // Hapus transaksi kredit toko dari panel kasir
+        var _kasirHapusBusy = false;
+
+        function hapusPiutangKasir(globalIdx) {
+            if (_kasirHapusBusy) return;
+            var h = kasirRekapFiltered[globalIdx];
+            if (!h) return Swal.fire('Error', 'Data transaksi tidak ditemukan.', 'error');
+            if (!h.id) return Swal.fire('Error', 'ID transaksi tidak valid.', 'error');
+            var nota = String(h.nota || '-').replace(/^'/, '');
+            var nominal = 'Rp ' + (Number(h.nilai) || 0).toLocaleString('id-ID');
+            Swal.fire({
+                title: 'Hapus Transaksi Kredit?',
+                html: '<div style="text-align:left; font-size:13px; line-height:1.7;">' +
+                    '<div style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:12px 14px; margin-bottom:12px; color:#991b1b;">' +
+                    '<div><b>Nota:</b> ' + escapeHtml(nota) + '</div>' +
+                    '<div><b>Pelanggan:</b> ' + escapeHtml(h.nama || '-') + ' (' + escapeHtml(h.noAnggota || '-') + ')</div>' +
+                    '<div><b>Nominal:</b> ' + nominal + '</div>' +
+                    '</div>' +
+                    '<div style="color:#7f8c8d; font-size:12px;"><i class="bi bi-exclamation-triangle-fill" style="color:#e74c3c;"></i> ' +
+                    'Data yang dihapus tidak dapat dikembalikan. Pastikan transaksi ini memang tidak diperlukan.</div>' +
+                    '</div>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="bi bi-trash3"></i> Ya, Hapus',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#e74c3c',
+                cancelButtonColor: '#95a5a6',
+                reverseButtons: true,
+                focusCancel: true,
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(function (r) {
+                if (!r.isConfirmed) return;
+                _kasirHapusBusy = true;
+                showProsesSimpan({
+                    title: 'Menghapus Transaksi',
+                    subtitle: 'Menghapus transaksi <b>' + escapeHtml(nota) + '</b> milik <b>' +
+                        escapeHtml(h.nama || h.noAnggota || '-') + '</b>.',
+                    steps: ['Memverifikasi transaksi', 'Menghapus data dari database', 'Memperbarui rekap kredit']
+                });
+                google.script.run.withSuccessHandler(function (res) {
+                    _kasirHapusBusy = false;
+                    if (res && res.status === 'sukses') {
+                        finishProsesSimpan().then(function () {
+                            Swal.fire({
+                                title: 'Berhasil Dihapus',
+                                html: '<div style="font-size:13px; line-height:1.6;">' +
+                                    escapeHtml(res.msg || 'Transaksi kredit berhasil dihapus.') + '</div>',
+                                icon: 'success',
+                                confirmButtonText: 'Selesai',
+                                confirmButtonColor: '#27ae60'
+                            }).then(function () {
+                                fetchKasirRekapServer();
+                            });
+                        });
+                    } else {
+                        abortProsesSimpan();
+                        Swal.fire('Gagal', (res && res.msg) ? res.msg : 'Transaksi gagal dihapus.', 'error');
+                    }
+                }).withFailureHandler(function (err) {
+                    _kasirHapusBusy = false;
+                    abortProsesSimpan();
+                    Swal.fire('Error', String(err), 'error');
+                }).hapusPiutangAdmin(h.id);
+            });
         }
 
         // Kirim WA Semua (dikelompokkan per anggota)
